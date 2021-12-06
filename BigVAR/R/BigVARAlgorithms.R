@@ -498,6 +498,12 @@ function (beta, groups,jjcomp, Y, Z, gamm, INIactive, eps,p,MN,k,k1,s,C1,interce
 
     BB <- GamLoopGLOO(beta,INIactive,gamm,Y,ZZ,kk,kkfull,kkcomp,eps,YMEAN,ZMEAN,k1,p*(k1)+m*s,M2,eigvals,eigvecs,k1)
 
+    newbeta <- array(NA, dim=c(k1,(k1)*p+m*s+1,length(gamm)))
+    for (i in seq_along(gamm)) {
+        newbeta[,,i] <- BB$beta[((i-1)*k1+1):(i*k1),]
+    }
+    BB$beta <- newbeta
+
     if(MN)
          {
              for(i in 1:(dim(BB$beta)[3]))
@@ -574,6 +580,12 @@ function (beta, groups,jjcomp, Y, Z, gamm, INIactive, eps,p,MN,k,k1,s,C1,interce
             
 
     BB <- GamLoopGLOO(beta,INIactive,gamm,Y,ZZ,kk,kkfull,kkcomp,eps,YMEAN,ZMEAN,k,p*k,M2,eigvals,eigvecs,k)
+
+    newbeta <- array(NA, dim=c(k,k*p+1,length(gamm)))
+    for (i in seq_along(gamm)) {
+        newbeta[,,i] <- BB$beta[((i-1)*k+1):(i*k),]
+    }
+    BB$beta <- newbeta
 
         if(MN)
             {

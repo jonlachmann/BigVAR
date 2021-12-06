@@ -295,18 +295,17 @@ cube gamloopFistaEN(NumericVector beta_, const mat& Y,const mat& Z,const  mat ga
 // Lag Group VARX-L functions
 
 // Newton-Raphson Functions
-inline double trust32(int k,const arma::mat& PP,double delta, double lambda,const arma::vec& EigVA,const arma::mat& EigVector){
+double trust32(int k,const arma::mat& PP,double delta, double lambda,const arma::vec& EigVA,const arma::mat& EigVector){
 	double g=0;
 	for(int i = 0; i < k; ++i)
-		{ 
-    
+		{
 			g+=pow(arma::as_scalar(trans(EigVector.col(i))*PP),2)/pow(EigVA[i]*delta+lambda,2);
 
 		}
 	return(g);
 }
 
-inline double fprime2(int k,const arma::mat& PP,double delta, double lambda, const arma::vec& EigVA,const arma::mat& EigVE)
+double fprime2(int k,const arma::mat& PP,double delta, double lambda, const arma::vec& EigVA,const arma::mat& EigVE)
 {
 	double gg2=0;
 	for(int i = 0; i < k; ++i)
@@ -323,7 +322,7 @@ inline double fprime2(int k,const arma::mat& PP,double delta, double lambda, con
 }
 
 //Newton raphson for trust region problem
-inline double Newton2(int k,const  arma::mat& P, double lambda, const arma::vec& EigVA,const arma::mat& EigVE){
+double Newton2(int k,const  arma::mat& P, double lambda, const arma::vec& EigVA,const arma::mat& EigVE){
 	double delta=0;
 	double threshold=1;
 	double phi=0;
@@ -332,7 +331,7 @@ inline double Newton2(int k,const  arma::mat& P, double lambda, const arma::vec&
 	while(threshold>.0001)
 		{
 			phi=1-1/pow(trust32(k, P, delta, lambda, EigVA, EigVE),.5);
-			deltanew+=phi/fprime2(k, P, deltanew, lambda, EigVA, EigVE);
+			deltanew += phi/fprime2(k, P, deltanew, lambda, EigVA, EigVE);
 
 			threshold = fabs(delta-deltanew);
 			delta=deltanew;
@@ -598,198 +597,6 @@ List GamLoopGL2(NumericVector beta_, List Activeset, NumericVector gamm, const m
 
 
 
-	List Results=List::create(Named("beta")=betafin,Named("active")=wrap(activefinal),Named("iterations")=iterations);
-	return(Results);
-}
-
-
-// *
-// Group Lasso Own/Other Functions
-// *
-
-List BlockUpdate2(const mat& ZZ1, double lam,const mat& Y1,double eps, List groups, List fullgroups, List compgroups, int k, List M2f_, List eigvalF_, List eigvecF_,colvec& B,int k1){
-	int n1=groups.size();
-	List active(n1);
-	colvec  BPrev=B;
-	int converge=0;
-	int count=0;
- 
-	if(groups.size()==count)
-		{
-			B.zeros();
-			active=groups;
-		}
-	else{
-		for(int i=0; i<n1;++i)
- 
-			{
-				NumericVector s1=groups[i];
-				IntegerVector s2=fullgroups[i];
-				NumericVector scomp=compgroups[i];
-				arma::uvec s45=as<arma::uvec>(s1);
-				arma::uvec s45F=as<arma::uvec>(s2);
-   	
-				if(max(s1)==0){
-	  
-					B.elem(s45F)=arma::zeros(s2.size());
-					active(i)=0;
-
-				}
-				if(max(s1)!=0){
-
-					arma::uvec s4=as<arma::uvec>(s1);
-
-	  
-					arma::uvec scomp2=as<arma::uvec>(scomp);
-
-					arma::mat M2a= ZZ1.cols(scomp2);
-					arma::colvec a1= B.elem(scomp2);
-					mat foo1=(M2a*a1);
-	   
-					arma::colvec r=M2a*a1-arma::vectorise(Y1);
-
-					arma::mat M1=ZZ1.cols(s4);
-					arma::mat M2=M2f_(i);
-					arma::vec eigval=eigvalF_(i);
-					arma::mat eigvec=eigvecF_(i);
-					arma::mat p=trans(M1)*r;
-
-					double rho=sqrt(static_cast<double>(s1.size()));
-					double adjlam=rho*lam;
-
-					if(arma::norm(p,2)<=adjlam)
-						{
-							arma::colvec astar=arma::zeros(s1.size());
-							active(i)=0;
-
-
-						}
-					else{
-						int k1a=M2.n_cols;
-    
-						double deltfin=  Newton2(k1a,p,adjlam,eigval,eigvec);
-	
-						arma::mat D1(s1.size(),s1.size());
-						D1.eye();
-						//correct for rare occurrence where newton returns zero
-						if(deltfin==0)
-							{
-								deltfin+=std::numeric_limits<double>::epsilon();
-							}
-							
-
-						arma::mat astar=-solve(M2+adjlam/deltfin*D1,p);
-
-						B.elem(s4)=astar;
-	
-						active(i)=s4;  
-
-					}
-		
-
-				}
-
-			}
-
-
-
-	}
-	double thresh=arma::norm(B-BPrev,"inf");
-	if(thresh<eps)
-		{
-			converge=1;
-
-		}
-	else{ 
-		converge=0;
-	}
-
-
-	Rcpp::List results=Rcpp::List::create(Named("beta")=B,Named("active")=active,Named("Converge")=converge);
-	return(results);
-
-}
-
-colvec ThreshUpdateOO(const mat& ZZ, double lam,const mat& Y,double eps, List groups, List fullgroups, List compgroups,List M2f_, List eigvalF_, List eigvecF_,colvec& B,int n, int k1)
-  {
-
-	  int kp=B.n_elem;
-	  int n1=groups.size();
-	  colvec BPrev=B;
-	  List active(n1);
-	  List betaActive2(3);
-	  int count=0;
-	  for(int i=0; i<n1; ++i)
-		  {
-			  NumericVector g1=groups[i];
-			  count+=max(g1);
-
-		  }
-	  if(count==0)
-		  {
-
-			  B.zeros(kp);
-
-			  active=groups;
-		  }
-	  else{
-		  double threshold=10*eps;
-		  while(threshold>eps)
-			  {
-				  betaActive2=BlockUpdate2(ZZ,lam,Y,eps,groups,fullgroups,compgroups,n,M2f_,eigvalF_,eigvecF_,B,k1);
-				  B=Rcpp::as<arma::colvec>(betaActive2["beta"]);
-	
-				  threshold=arma::norm(B-BPrev,"inf");
-				  active=betaActive2("active");
-				  BPrev=B;
-
-			  }
-	  }
-	  return(B);
-  }
-
-// [[Rcpp::export]]
-List GamLoopGLOO(NumericVector beta_, List Activeset, NumericVector gamm, const mat& Y, const mat& Z,List jj, List jjfull, List jjcomp, double eps, colvec& YMean2, colvec& ZMean2,int k,int pk,List M2f_, List eigvalF_, List eigvecF_,int k1)
-{
-
-	IntegerVector dims=beta_.attr("dim");
-	int gran2=gamm.size();
-	List activefinal(gran2);
-	cube beta2(beta_.begin(),dims[0],dims[1],dims[2],false);
-	cube betafin(dims[0],dims[1]+1,dims[2]);
-	betafin.fill(0);
-	List iterations(gran2);
-	mat betaPrev=zeros<mat>(dims[0],dims[1]);
-
-	arma::colvec B=arma::vectorise(betaPrev);
-	NumericVector betaF2(dims[0]*dims[1]);
-
-	for(int i=0; i<gran2;++i)
-		{
-			double gam=gamm[i];
-			betaPrev=beta2.slice(i);
-			B=arma::vectorise(betaPrev);
-			List Active = Activeset[i];
-			int k2=0;
-			int converge=0;
-			List betaFull(3);
-			while(converge==0)
-				{
-	    
-					B = ThreshUpdateOO(Z, gam, Y, eps, Active, jjfull, jjcomp, M2f_,eigvalF_,eigvecF_,B,k1,k1);
-					betaFull=BlockUpdate2(Z,gam,Y,eps,jjfull,jjfull,jjcomp,k,M2f_,eigvalF_,eigvecF_,B,k1);
-					betaF2=as<NumericVector>(betaFull("beta"));
-					Active=betaFull("active");
-					converge =betaFull("Converge");
-					k2+=1;
-
-				}
-			mat betaF(betaF2.begin(),dims[0],dims[1],false);
-			colvec nu= YMean2 - betaF *ZMean2;
-			betafin.slice(i)=mat(join_horiz(nu, betaF));
-			activefinal[i]=Active;
-			iterations[i]=k2; 
-		}
 	List Results=List::create(Named("beta")=betafin,Named("active")=wrap(activefinal),Named("iterations")=iterations);
 	return(Results);
 }

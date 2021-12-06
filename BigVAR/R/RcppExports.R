@@ -37,10 +37,6 @@ GamLoopGL2 <- function(beta_, Activeset, gamm, Y1, Z1, jj, jjfull, jjcomp, eps, 
     .Call('_BigVAR_GamLoopGL2', PACKAGE = 'BigVAR', beta_, Activeset, gamm, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_)
 }
 
-GamLoopGLOO <- function(beta_, Activeset, gamm, Y, Z, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, k1) {
-    .Call('_BigVAR_GamLoopGLOO', PACKAGE = 'BigVAR', beta_, Activeset, gamm, Y, Z, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, k1)
-}
-
 GamLoopSGLOO <- function(beta_, Activeset_, gamm, alpha, Y, Z, jj_, jjfull_, jjcomp_, eps, YMean2, ZMean2, k1, pk, M2f_, eigs_, m) {
     .Call('_BigVAR_GamLoopSGLOO', PACKAGE = 'BigVAR', beta_, Activeset_, gamm, alpha, Y, Z, jj_, jjfull_, jjcomp_, eps, YMean2, ZMean2, k1, pk, M2f_, eigs_, m)
 }
@@ -99,5 +95,9 @@ GamLoopSGLDP <- function(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjco
 
 GamLoopSGLXDP <- function(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1) {
     .Call('_BigVAR_GamLoopSGLXDP', PACKAGE = 'BigVAR', beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1)
+}
+
+GamLoopGLOO <- function(beta_, Activeset, gamm, Y, Z, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, k1) {
+    .Call('_BigVAR_GamLoopGLOO', PACKAGE = 'BigVAR', beta_, Activeset, gamm, Y, Z, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, k1)
 }
 
