@@ -1207,7 +1207,7 @@ predictMS <- function(pred, Y, n.ahead, B, p, MN = FALSE, predict_all = FALSE, n
 }
 
 # Multi-step VARX with new data.
-predictMSX <- function(pred, Y, n.ahead, B, p, newxreg, X, m, s, cumulative, MN, contemp = FALSE) {
+predictMSX <- function(pred, Y, n.ahead, B, p, newxreg, X, m, s, cumulative, MN, contemp = FALSE, predict_all = FALSE, n.ahead_full = n.ahead) {
 
     Y <- rbind(Y, pred)
     X <- rbind(X, matrix(newxreg[cumulative, ], ncol = m))
@@ -1231,10 +1231,14 @@ predictMSX <- function(pred, Y, n.ahead, B, p, newxreg, X, m, s, cumulative, MN,
         pred <- matrix(B %*% Z, ncol = ncol(Y), nrow = 1)
     }
     if (n.ahead == 1) {
-        return(pred)
+        if (predict_all) {
+            return(rbind(Y[((nrow(Y) - n.ahead_full) + 1):nrow(Y), ], pred))
+        } else {
+            return(pred)
+        }
     }
 
-    predictMSX(pred, Y, n.ahead - 1, B, p, newxreg, X, m, s, cumulative + 1, MN)
+    predictMSX(pred, Y, n.ahead - 1, B, p, newxreg, X, m, s, cumulative + 1, MN, predict_all = predict_all, n.ahead_full = n.ahead_full)
 
 }
 

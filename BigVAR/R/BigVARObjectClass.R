@@ -1539,9 +1539,9 @@ setMethod("predict", "BigVAR.results", function(object, n.ahead = 1, newxreg = N
                 if (contemp) {
                   C <- C + 3
                 }
-                fcst <- matrix(predictMSX(matrix(fcst, nrow = 1), as.matrix(Y[(nrow(Y) - C + 1):nrow(Y), 1:(k)]), n.ahead -
+                fcst <- predictMSX(matrix(fcst, nrow = 1), as.matrix(Y[(nrow(Y) - C + 1):nrow(Y), 1:(k)]), n.ahead -
                   1, betaPred, p, newxreg, matrix(Y[(nrow(Y) - C + 1):nrow(Y), (ncol(Y) - m + 1):ncol(Y)], ncol = m), m,
-                  s, 1, MN, contemp), ncol = 1)
+                  s, 1, MN, contemp, predict_all = predict_all)
             }
         }
     }
@@ -1554,7 +1554,8 @@ setMethod("predict", "BigVAR.results", function(object, n.ahead = 1, newxreg = N
             return(forecast)
         })
         if (!predict_all) fcst <- fcst[[1]]
-        else names(fcst) <- colnames(object@Data)
+        else if (length(object@VARX) == 0) names(fcst) <- colnames(object@Data)
+        else names(fcst) <- colnames(object@Data)[seq_len(object@VARX$k)]
     }
     return(fcst)
 })
