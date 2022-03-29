@@ -1202,7 +1202,7 @@ predictMS <- function(pred, Y, n.ahead, B, p, MN = FALSE, predict_all = FALSE, n
         }
     }
 
-    predictMS(pred, Y, n.ahead - 1, B, p, MN, predict_all, n.ahead_full = n.ahead)
+    predictMS(pred, Y, n.ahead - 1, B, p, MN, predict_all, n.ahead_full = n.ahead_full)
 
 }
 

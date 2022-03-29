@@ -1546,10 +1546,15 @@ setMethod("predict", "BigVAR.results", function(object, n.ahead = 1, newxreg = N
         }
     }
     if (confint) {
-        lower <- fcst + ci[, 1]
-        upper <- fcst + ci[, 2]
-        fcst <- as.data.frame(cbind(fcst, lower, upper))
-        names(fcst) <- c("forecast", "lower", "upper")
+        fcst <- lapply(seq_len(ncol(fcst)), function (x) {
+            lower <- fcst[,x] + ci[, 1]
+            upper <- fcst[,x] + ci[, 2]
+            forecast <- as.data.frame(cbind(fcst[,x], lower, upper))
+            names(forecast) <- c("forecast", "lower", "upper")
+            return(forecast)
+        })
+        if (!predict_all) fcst <- fcst[[1]]
+        else names(fcst) <- colnames(object@Data)
     }
     return(fcst)
 })
