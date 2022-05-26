@@ -45,12 +45,8 @@ GamLoopGLOO <- function(beta_, Activeset, gamm, Y, Z, jj, jjfull, jjcomp, eps, Y
     .Call('_BigVAR_GamLoopGLOO', PACKAGE = 'BigVAR', beta_, Activeset, gamm, Y, Z, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, k1)
 }
 
-GamLoopSGLOO <- function(beta_, Activeset_, gamm, alpha, Y, Z, jj_, jjfull_, jjcomp_, eps, YMean2, ZMean2, k1, pk, M2f_, eigs_, m) {
-    .Call('_BigVAR_GamLoopSGLOO', PACKAGE = 'BigVAR', beta_, Activeset_, gamm, alpha, Y, Z, jj_, jjfull_, jjcomp_, eps, YMean2, ZMean2, k1, pk, M2f_, eigs_, m)
-}
-
-GamLoopSGLOODP <- function(beta_, Activeset_, gamm, alpha, Y, Z, jj_, jjfull_, jjcomp_, eps, YMean2, ZMean2, k1, pk, M2f_, eigs_, m) {
-    .Call('_BigVAR_GamLoopSGLOODP', PACKAGE = 'BigVAR', beta_, Activeset_, gamm, alpha, Y, Z, jj_, jjfull_, jjcomp_, eps, YMean2, ZMean2, k1, pk, M2f_, eigs_, m)
+SGLOO <- function(B, Active, gam, alpha, Y, Z, jjfull_, jjcomp_, eps, YMean2, ZMean2, k1, pk, M2f_, eigs_, m) {
+    .Call('_BigVAR_SGLOO', PACKAGE = 'BigVAR', B, Active, gam, alpha, Y, Z, jjfull_, jjcomp_, eps, YMean2, ZMean2, k1, pk, M2f_, eigs_, m)
 }
 
 Fistapar <- function(Y, Z, phi, L, lambda, eps, tk, k, sep_lambda = FALSE) {

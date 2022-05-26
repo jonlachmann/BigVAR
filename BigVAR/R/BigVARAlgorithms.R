@@ -1,7 +1,5 @@
 .MCPFit <- function(B, Z, Y, lambda, eps, p, MN, k, k1, s, m, C, group, gamma = 3, YMean, ZMean) {
-  tk <- 1 / max(Mod(eigen(Z %*% t(Z), only.values = TRUE)$values))
 
-  B1 <- abind::adrop(B[, 2:dim(B)[2], 1, drop = F], 3)
   nc <- apply(B, 3, ncol)[1]
   BINI <- B[, 2:nc, , drop = F]
   if (group == "MCP") {
@@ -41,20 +39,22 @@
     q1[[j]] <- gg1$q1
   }
   jj <- .lfunction3cpp(p, k)
-  jjfull <- jj
   jjcomp <- .lfunctioncomp(p, k)
   dims <- dim(beta)
   beta <- array(beta[, 2:ncol(beta[, , 1]), ], dim = c(dims[1], dims[2] - 1, dims[3]))
-  if (!dual) {
-    BB <- GamLoopSGLOO(
-      beta, INIactive, lambda, alpha, Y, ZZ, jj, jj, jjcomp, eps, YMean, ZMean, k, p * k, M2f, eigs,
-      m
-    )
-  } else {
-    BB <- GamLoopSGLOODP(
-      beta, INIactive, lambda, alpha, Y, ZZ, jj, jj, jjcomp, eps, YMean, ZMean, k, p * k, M2f, eigs,
-      m
-    )
+
+  BB <- list()
+  BB$beta <- array(NA, dim = dims)
+  BB$active <- list()
+  lambda <- as.matrix(lambda)
+  Yvec <- c(Y)
+  for (i in seq_len(nrow(lambda))) {
+    for (j in seq_along(alpha)) {
+      idx <- (i - 1) * length(alpha) + j
+      BB_tmp <- SGLOO(beta[,,idx], INIactive[[idx]], lambda[i,j], alpha[j], Yvec, ZZ, jj, jjcomp, eps, YMean, ZMean, k, p * k, M2f, eigs, m)
+      BB$beta[,,idx] <- BB_tmp$beta
+      BB$active[[idx]] <- BB_tmp$active
+    }
   }
 
   BB$q1 <- q1
@@ -127,7 +127,6 @@
   jj <- .groupfuncpp(p, k)
   jjfull <- jj
   jjcomp <- .groupfuncomp(p, k)
-  ngp <- length(alpha) * length(lambda)
   dims <- dim(beta)
   beta <- array(beta[, 2:ncol(beta[, , 1]), ], dim = c(dims[1], dims[2] - 1, dims[3]))
   BB <- GamLoopSGLDP(beta, INIactive, lambda, alpha, Y, Z, jj, jjfull, jjcomp, eps, YMean, ZMean, k, p * k, M1f, M2f, eigs)
@@ -239,7 +238,6 @@
   m <- k - k1
 
   Y <- t(Y)
-  M1f <- list()
   M2f <- list()
   eigs <- c()
   q1 <- list()
@@ -279,10 +277,7 @@
 .SparseGroupLassoVARXDual <- function(beta, groups, compgroups, Y, Z, lambda, alpha, INIactive, eps, starting_eigvals, p,
                                       MN, k, s, k1, C, YMean, ZMean) {
   m <- k - k1
-
   Y <- t(Y)
-
-  M1f <- list()
   M2f <- list()
   eigs <- c()
   q1 <- list()
@@ -301,8 +296,6 @@
       eigs[j] <- M2f[[j]]
     }
   }
-
-
 
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, (k1) * p + (s * m), nrow(lambda) * length(alpha)))
 
@@ -325,10 +318,8 @@
   m <- k - k1
 
   Y <- t(Y)
-  M1f <- list()
   M2f <- list()
   eigs <- c()
-  q1 <- list()
 
   # function for R calculations jj <- diaggroupfunVARXLG(p, k, k1, s)
   rgroups <- lapply(groups, function(x) {
@@ -354,15 +345,21 @@
   }
 
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, k1 * p + m * s, gran2))
-  if (dual) {
-    BB <- GamLoopSGLOODP(beta, INIactive, lambda, alpha, Y, ZZ, groups, groups, compgroups, eps, YMean, ZMean, k1, p *
-      k1 + m * s, M2f, eigs, m)
-  } else {
-    BB <- GamLoopSGLOO(
-      beta, INIactive, lambda, alpha, Y, ZZ, groups, fullgroups, compgroups, eps, YMean, ZMean, k1,
-      p * k1 + m * s, M2f, eigs, m
-    )
+
+  BB <- list()
+  BB$beta <- array(NA, dim = dims)
+  BB$active <- list()
+  lambda <- as.matrix(lambda)
+  Yvec <- c(Y)
+  for (i in seq_len(nrow(lambda))) {
+    for (j in seq_along(alpha)) {
+      idx <- (i - 1) * length(alpha) + j
+      BB_tmp <- SGLOO(beta[,,idx], INIactive[[idx]], lambda[i,j], alpha[j], Yvec, ZZ, groups, compgroups, eps, YMean, ZMean, k1, p * k1 + m * s, M2f, eigs, m)
+      BB$beta[,,idx] <- BB_tmp$beta
+      BB$active[[idx]] <- BB_tmp$active
+    }
   }
+
   if (MN) {
     BB$beta <- adjust_mn_var(BB$beta, C)
   }
@@ -376,9 +373,6 @@
 .HLAGElemAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, separate_lambdas = FALSE) {
   k <- ncol(Y)
 
-  betafin <- beta
-
-  tk <- 1 / max(Mod(eigen(Z %*% t(Z))$values))
   lambda <- as.matrix(lambda)
   betaini <- array(beta[, 2:ncol(beta[, , 1]), ], dim = c(k, k * p, nrow(lambda)))
   betafin <- gamloopElem(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, separate_lambdas)
@@ -445,11 +439,6 @@
 
   k <- ncol(Y)
 
-
-  betafin <- beta
-
-  tk <- 1 / max(Mod(eigen(Z %*% t(Z))$values))
-
   lambda <- as.matrix(lambda)
   if (separate_lambdas) {
     betaini <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k, k * p, nrow(lambda)))
@@ -499,10 +488,6 @@
 # HLAG Own/Other
 .HLAGOOAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, separate_lambdas = FALSE) {
   k <- ncol(Y)
-  betafin <- beta
-  YOLD <- Y
-  ZOLD <- Z
-
 
   weights <- sqrt(c(rep(c(1, k - 1), length = 2 * p)))
   groups <- list()
@@ -514,7 +499,6 @@
   betaini <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k, k * p, nrow(lambda)))
 
   betafin <- gamloopOO(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, weights, groups, separate_lambdas)
-
 
   if (MN) {
     betafin <- adjust_mn_var(betafin, C)
