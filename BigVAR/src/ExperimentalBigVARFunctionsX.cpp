@@ -17,10 +17,9 @@ using namespace arma;
 // Soft thresholding
 // [[Rcpp::export]]
 double ST1a(double z, double gam){
-
-	if(z>0 && gam<fabs(z)) return(z-gam);
-	if(z<0 && gam<fabs(z)) return(z+gam);
-	if(gam>=fabs(z)) return(0);
+	if (z > 0 && gam < fabs(z)) return(z - gam);
+	if (z < 0 && gam < fabs(z)) return(z + gam);
+	if (gam >= fabs(z)) return(0);
 	else return(0);
 }
 
@@ -45,21 +44,13 @@ colvec ST3a(colvec z, double gam)
 
 
 // Columnwise softthresholding pass by reference for Lasso-VAR
-colvec ST3ar(const colvec& z ,const double gam)
-{
-
-	int n=z.size();
-
-	colvec z1(n);
-
-	for( int i=0; i<n;++i)
-		{
-
-			double z11=z(i);
-
-			z1(i)=ST1a(z11,gam);
-
-		}
+colvec ST3ar(const colvec& z, const double gam) {
+    int n = z.size();
+    colvec z1(n);
+    for (int i = 0; i < n; ++i) {
+        double z11 = z(i);
+        z1(i) = ST1a(z11, gam);
+    }
 	return(z1);
 }
 
@@ -802,70 +793,62 @@ mat createmat(colvec U, int n)
 }
 
 
-mat sparseWLOO(const mat& M1a, const colvec& R1, const double ngroups, colvec& beta, const double t, const double alpha, const double lambda,const double eps,double rho)
+mat sparseWLOO(const mat& M1a, const colvec& R1, const double ngroups, colvec& beta, const double t, const double alpha, const double lambda, const double eps,double rho)
 {
+	double thresh = 10;
+	colvec p = beta;
+	colvec STS = beta;
+	colvec thetaOLD = beta;
+	double l = 1;
 
-	double thresh=10;
-	colvec p=beta;
-	colvec STS=beta;
-	colvec thetaOLD=beta;
-	double l=1;
-	colvec one=ones<vec>(beta.n_elem);
-	// Rcout<<"Step size "<< t<<std::endl;
-	// double ngroups2=beta.n_elem;
-	while(thresh>eps)
-		{
-			p = trans(M1a)*(M1a*beta-R1)/ngroups;
-   
-			const colvec p1=beta-t*vectorise(p);
-			if(alpha>0){
-				STS=ST3ar(p1,t*alpha*lambda);
-			}else{
-				STS=p1;
-		    }
-			
-			double denom2= norm(STS,"fro")+sqrt(std::numeric_limits<double>::epsilon());
+	while (thresh > eps) {
+        p = trans(M1a) * (M1a * beta - R1) / ngroups;
 
-			// Rcout<<"Norm of regularized coefficients"<<denom2<<std::endl;
-			double s3=fmax(1-(t*(1-alpha)*lambda*rho)/denom2,0);
-			STS=s3*STS;
- 
-			beta=thetaOLD+(l/(l+3))*(STS-thetaOLD);
- 
-			l=l+1;
-			//Relative thresholds seem to help with computation time
-			thresh=max(abs(beta-STS)/(one+abs(STS)));
-			thetaOLD=STS;
-			// if(l>10 && (int) l % 5==0){
-			// 	Rcout<<"threshold"<<thresh<<"iteration"<< l <<std::endl;
-			// }
-		}
- 
+        const colvec p1 = beta - t * vectorise(p);
+        if (alpha > 0) {
+            STS = ST3ar(p1, t * alpha * lambda);
+        } else {
+            STS = p1;
+        }
+
+        double denom2 = norm(STS, "fro") + sqrt(std::numeric_limits<double>::epsilon());
+
+        // Rcout<<"Norm of regularized coefficients"<<denom2<<std::endl;
+        double s3 = fmax(1 - (t * (1 - alpha) * lambda * rho) / denom2, 0);
+        STS = s3 * STS;
+
+        beta = thetaOLD + (l / (l + 3)) * (STS - thetaOLD);
+
+        l = l + 1.0;
+        //Relative thresholds seem to help with computation time
+        thresh = max(abs(beta - STS) / (1 + abs(STS)));
+        thetaOLD = STS;
+    }
+
 	return(beta);
 }
 
 List blockUpdateSGLOO(int& converge, double& thresh, colvec& beta, const mat& Z1, double lam, double alpha, colvec &Y2, double eps, List groups_, const List fullgroups_, List compgroups_,const List M2f_,const NumericVector Eigs_,double k1, double m)
 {
  
-	int n1=groups_.size();
+	int n1 = groups_.size();
 	List active(n1);
 	// Rcout<<n1<<endl;
 	// int n=beta2.n_rows, m=beta2.n_cols;
 
 	// colvec beta=vectorise(beta2);
 
-	colvec betaPrev=beta;
+	colvec betaPrev = beta;
 
-	converge=0;
-	int count=0;
-	colvec one=ones<vec>(beta.n_elem);
+	converge = 0;
+	int count = 0;
 	// arma:: colvec Y2=arma::vectorise(Y1,0);
 
 	if (groups_.size() == count) {
         // Rcout<<"No Active groups"<<endl;
         // beta.zeros(n,m);
         beta.zeros();
-        active=groups_;
+        active = groups_;
     } else {
         for (int i = 0; i < n1; ++i) {
             arma::uvec s4 = as<arma::uvec>(groups_[i]);
@@ -906,7 +889,7 @@ List blockUpdateSGLOO(int& converge, double& thresh, colvec& beta, const mat& Z1
                     double ngroups = (double) Y2.n_elem;
 
                     // Rcout<<ngroups<<endl;
-                    const  mat astar2 = sparseWLOO(M1, r,ngroups, betaS, t,  alpha, lam, eps, rho);
+                    const mat astar2 = sparseWLOO(M1, r, ngroups, betaS, t,  alpha, lam, eps, rho);
 
                     // Rcout<<"astar 2"<< astar2 <<endl;
                     beta.elem(s4) = astar2;
@@ -915,7 +898,7 @@ List blockUpdateSGLOO(int& converge, double& thresh, colvec& beta, const mat& Z1
             }
         }
     }
-	thresh = max(abs(beta - betaPrev) / (one + abs(betaPrev)));
+	thresh = max(abs(beta - betaPrev) / (1 + abs(betaPrev)));
 
 	if (thresh < eps) {
 		converge = 1;
@@ -1394,10 +1377,10 @@ List powermethod(mat A, colvec x1) {
 	arma::mat y=x;
 	double theta=0;
 	while (dd > eps*fabs(theta)) {
-		x=y/arma::norm(y,2);
-		y = A*x;
+		x = y / arma::norm(y, 2);
+		y = A * x;
 		theta=as_scalar(trans(x)*y);
-		dd=arma::norm(y-theta*x,2);
+		dd=arma::norm(y - theta * x, 2);
 	}
 	double lambda=theta;
 	Rcpp::List results = Rcpp::List::create(Named("lambda")=as<double>(wrap(lambda)),Named("q1")=as<NumericVector>(wrap(x)));

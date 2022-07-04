@@ -57,6 +57,24 @@
     }
   }
 
+  #runs <- list()
+  #for (i in seq_len(nrow(lambda))) {
+  #  for (j in seq_along(alpha)) {
+  #    idx <- (i - 1) * length(alpha) + j
+  #    runs[[idx]] <- c(i, j)
+  #  }
+  #}
+
+  #BB_tmp <- mclapply(runs, function(x) {
+  #  idx <- (x[1] - 1) * length(alpha) + x[2]
+  #  SGLOO(beta[,,idx], INIactive[[idx]], lambda[x[1],x[2]], alpha[x[2]], Yvec, ZZ, jj, jjcomp, eps, YMean, ZMean, k, p * k, M2f, eigs, m)
+  #})
+
+  #for (i in seq_along(BB_tmp)) {
+  #  BB$beta[,,i] <- BB_tmp[[i]]$beta
+  #  BB$active[[i]] <- BB_tmp[[i]]$active
+  #}
+
   BB$q1 <- q1
 
   if (MN) {
