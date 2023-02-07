@@ -1066,11 +1066,7 @@ setMethod(f = "BigVAR.Eval", signature = "BigVAR.intermediate", definition = fun
         beta <- temp$beta
         betaWS <- temp$beta
         if (MN) {
-            for (i in 1:dim(betaWS)[3]) {
-                submat <- adrop(betaWS[1:dim(betaWS)[1], 1:dim(betaWS)[1], i, drop = F], drop = 3)
-                diag(submat) <- diag(submat) - C
-                betaWS[1:dim(betaWS)[1], 1:dim(betaWS)[1], i] <- submat
-            }
+            betaWS <- applyMinnesotaPrior(betaWS, C)
         }
         activeset <- temp$activeset
         msfe_index <- v - (T2 - h) - 1
