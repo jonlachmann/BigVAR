@@ -888,7 +888,6 @@ diaggroupfunVARXcompL <- function(p, k, k1) {
 LGSearch <- function(gstart, Y, Z, BOLD, group, k1, p, s, m, gs, k, MN, alpha, C, intercept, tol, VARX, gamma, restrictions) {
     s1 <- 0
     palpha <- NULL
-    tk <- 1/max(Mod(eigen(Z %*% t(Z))$values))
     lambdah <- gstart
     lambdal <- 0
     activeset <- list(rep(rep(list(0), length(gs))))
@@ -1465,10 +1464,10 @@ create_lambda_grid <- function(trainY, trainZ, groups, gran1, gran2, group, p, k
     if (dual) {
         lambda <- matrix(0, nrow = gran2, ncol = length(alpha))
 
-        for (i in 1:length(alpha)) {
+        for (i in seq_along(alpha)) {
 
             lambda[, i] <- .LambdaGrid(gran1, gran2, groups, trainY, trainZ, group, p, k1, s, m, k, MN, alpha[i], C, intercept,
-                tol, VARX = VARX, linear = linear)
+                tol, VARX = VARX, linear = linear, restrictions = restrictions)
 
         }
 
