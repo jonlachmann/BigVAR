@@ -551,8 +551,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // mcp_loop
-cube mcp_loop(mat Y, mat Z, cube B, const vec lambda, const double tol, double gamma, bool mcp);
-RcppExport SEXP _BigVAR_mcp_loop(SEXP YSEXP, SEXP ZSEXP, SEXP BSEXP, SEXP lambdaSEXP, SEXP tolSEXP, SEXP gammaSEXP, SEXP mcpSEXP) {
+cube mcp_loop(mat Y, mat Z, cube B, const vec lambda, const double tol, double gamma, mat restrictions, bool mcp);
+RcppExport SEXP _BigVAR_mcp_loop(SEXP YSEXP, SEXP ZSEXP, SEXP BSEXP, SEXP lambdaSEXP, SEXP tolSEXP, SEXP gammaSEXP, SEXP restrictionsSEXP, SEXP mcpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -562,14 +562,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const vec >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< const double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< mat >::type restrictions(restrictionsSEXP);
     Rcpp::traits::input_parameter< bool >::type mcp(mcpSEXP);
-    rcpp_result_gen = Rcpp::wrap(mcp_loop(Y, Z, B, lambda, tol, gamma, mcp));
+    rcpp_result_gen = Rcpp::wrap(mcp_loop(Y, Z, B, lambda, tol, gamma, restrictions, mcp));
     return rcpp_result_gen;
 END_RCPP
 }
 // gamloopMCP
-cube gamloopMCP(NumericVector beta_, const mat& Y, const mat& Z, vec lambda, const double eps, const colvec& YMean2, const colvec& ZMean2, double gamma, bool mcp);
-RcppExport SEXP _BigVAR_gamloopMCP(SEXP beta_SEXP, SEXP YSEXP, SEXP ZSEXP, SEXP lambdaSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP gammaSEXP, SEXP mcpSEXP) {
+cube gamloopMCP(NumericVector beta_, const mat& Y, const mat& Z, vec lambda, const double eps, const colvec& YMean2, const colvec& ZMean2, double gamma, mat restrictions, bool mcp);
+RcppExport SEXP _BigVAR_gamloopMCP(SEXP beta_SEXP, SEXP YSEXP, SEXP ZSEXP, SEXP lambdaSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP gammaSEXP, SEXP restrictionsSEXP, SEXP mcpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -581,8 +582,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const colvec& >::type YMean2(YMean2SEXP);
     Rcpp::traits::input_parameter< const colvec& >::type ZMean2(ZMean2SEXP);
     Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< mat >::type restrictions(restrictionsSEXP);
     Rcpp::traits::input_parameter< bool >::type mcp(mcpSEXP);
-    rcpp_result_gen = Rcpp::wrap(gamloopMCP(beta_, Y, Z, lambda, eps, YMean2, ZMean2, gamma, mcp));
+    rcpp_result_gen = Rcpp::wrap(gamloopMCP(beta_, Y, Z, lambda, eps, YMean2, ZMean2, gamma, restrictions, mcp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -615,8 +617,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BigVAR_GamLoopSGL", (DL_FUNC) &_BigVAR_GamLoopSGL, 17},
     {"_BigVAR_GamLoopSGLDP", (DL_FUNC) &_BigVAR_GamLoopSGLDP, 17},
     {"_BigVAR_GamLoopSGLXDP", (DL_FUNC) &_BigVAR_GamLoopSGLXDP, 17},
-    {"_BigVAR_mcp_loop", (DL_FUNC) &_BigVAR_mcp_loop, 7},
-    {"_BigVAR_gamloopMCP", (DL_FUNC) &_BigVAR_gamloopMCP, 9},
+    {"_BigVAR_mcp_loop", (DL_FUNC) &_BigVAR_mcp_loop, 8},
+    {"_BigVAR_gamloopMCP", (DL_FUNC) &_BigVAR_gamloopMCP, 10},
     {NULL, NULL, 0}
 };
 

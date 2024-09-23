@@ -2505,37 +2505,37 @@ List GamLoopSGLXDP(NumericVector beta_, List Activeset, mat gamm, colvec alpha, 
 
 
 double MCP(double z, double l1, double l2, double gamma, double v) {
-  double s=0;
+  double s = 0;
   if (z > 0) s = 1;
   else if (z < 0) s = -1;
   if (fabs(z) <= l1) return(0);
-  else if (fabs(z) <= gamma*l1*(1+l2)) return(s*(fabs(z)-l1)/(v*(1+l2-1/gamma)));
-  else return(z/(v*(1+l2)));
+  else if (fabs(z) <= gamma * l1 * (1 + l2)) return(s * (fabs(z) - l1) / (v * (1 + l2 - 1 / gamma)));
+  else return(z / (v * (1 + l2)));
 }
 
 double SCAD(double z, double l1, double l2, double gamma, double v) {
-  double s=0;
+  double s = 0;
   if (z > 0) s = 1;
   else if (z < 0) s = -1;
   if (fabs(z) <= l1) return(0);
-  else if (fabs(z) <= (l1*(1+l2)+l1)) return(s*(fabs(z)-l1)/(v*(1+l2)));
-  else if (fabs(z) <= gamma*l1*(1+l2)) return(s*(fabs(z)-gamma*l1/(gamma-1))/(v*(1-1/(gamma-1)+l2)));
-  else return(z/(v*(1+l2)));
+  else if (fabs(z) <= (l1 * (1 + l2) + l1)) return(s * (fabs(z) - l1) / (v * (1 + l2)));
+  else if (fabs(z) <= gamma * l1 * (1 + l2)) return(s * (fabs(z) - gamma * l1 / (gamma - 1)) / (v * (1 - 1 / (gamma - 1) + l2)));
+  else return(z / (v * (1 + l2)));
 }
 
 
 
 // We solve along the regularization path due to non-convexity concerns, need good starting vals  fit by series
 // [[Rcpp::export]]
-cube mcp_loop(mat Y,mat Z, cube B, const vec lambda,const double tol,double gamma,bool mcp=true){
+cube mcp_loop(mat Y, mat Z, cube B, const vec lambda, const double tol, double gamma, mat restrictions, bool mcp = true){
 
-	int n1 =Z.n_rows;
+	int n1 = Z.n_rows;
 	vec cps(Z.n_rows);
-	double Z2=Z.n_cols;
-	for(int i=0;i<n1;++i){
-		cps(i)=as_scalar(Z.row(i)*trans(Z.row(i)))/Z2;
+	double Z2 = Z.n_cols;
+	for (int i = 0; i < n1; ++i) {
+		cps(i) = as_scalar(Z.row(i) * trans(Z.row(i))) / Z2;
 	}
-	vec active=zeros(B.n_cols);
+	vec active = zeros(B.n_cols);
 	// for(int i=0;i<r.n_elem;++i){
 	// 	 if(B
 	// 	 active(i)=pow(r(i),2);
@@ -2548,7 +2548,7 @@ cube mcp_loop(mat Y,mat Z, cube B, const vec lambda,const double tol,double gamm
 	double gloss;
 	double T;
 	double sdy;
-	double pk=Z.n_rows;
+	double pk = Z.n_rows;
 	double k = B.n_rows;
 	mat BOLD_FULL;
 	// double alpha=1;
@@ -2556,144 +2556,104 @@ cube mcp_loop(mat Y,mat Z, cube B, const vec lambda,const double tol,double gamm
 	// double l2 = lam *  (1-alpha);
 	 
 	// mat B=zeros(
-	int nlambdas=B.n_slices;
-	for(int j=0;j<nlambdas;++j){
-		// Rcout<<j<<endl;
-		mat BPH = zeros(k,pk); 
-		if(j>0){
-			// Rcout<<"before"<<endl;
-			BOLD_FULL=B.slice(j-1);
-			// Rcout<<"end"<<endl;
-		}else{
-			BOLD_FULL=zeros(k,pk);
+	int nlambdas = B.n_slices;
+	for (int j = 0; j < nlambdas; ++j) {
+		mat BPH = zeros(k, pk);
+		if (j > 0) {
+			BOLD_FULL = B.slice(j - 1);
+		} else {
+			BOLD_FULL = zeros(k, pk);
 		}
-		for(int i=0;i<pk;++i){
-			if(BOLD_FULL(i)!=0){
-				active(i)=1;
-			}else{
-				active(i)=0;
+		for (int i = 0; i < pk; ++i) {
+			if (BOLD_FULL(i) != 0) {
+				active(i) = 1;
+			} else {
+				active(i) = 0;
 			}
 		}
 
-		mat BTemp_FULL=B.slice(j);
+		mat BTemp_FULL = B.slice(j);
 		int nrows = BTemp_FULL.n_rows;
-		for(int jj=0;jj<nrows;++jj){
+		for (int jj = 0; jj < nrows; ++jj) {
 			rowvec BTemp = BTemp_FULL.row(jj);
 			rowvec BOLD = BOLD_FULL.row(jj);
+			rowvec restrict = restrictions.row(jj);
 			vec r = Y.col(jj);
 			// double gloss=sum(r*r);
 			int len_r = r.n_elem;
-			vec r2=zeros(len_r);
-			for(int ii=0;ii<len_r;++ii){
-				r2(ii)=pow(r(ii),2);
+			vec r2 = zeros(len_r);
+			for (int ii = 0; ii < len_r; ++ii) {
+				r2(ii) = pow(r(ii), 2);
 			}
-			gloss=sum(r2);
-			T=Y.n_rows;
-			sdy=sqrt(gloss/T);
-				
+			gloss = sum(r2);
+			T = Y.n_rows;
+			sdy = sqrt(gloss / T);
 
-						
-			double thresh=10*tol;
-			int counter=0;
+			double thresh = 10 * tol;
+			int counter = 0;
 
-			while(counter<100){
+			while (counter < 100) {
 				// int counter =0;
-
-				counter+=1;
+                counter += 1;
 				int counter2 = 0;
-				while (counter2 < 100)
-					{
+				while (counter2 < 100) {
+                    thresh = 0;
+                    for (int i = 0; i < pk; ++i) {
+                        if (active(i) != 0 && restrict(i)) {
+                            vec Z2 = trans(Z.row(i));
+                            double G1 = as_scalar(trans(r) * Z2) / T + BOLD(i) * cps(i);
+                            if (mcp) {
+                                BTemp(i) = MCP(G1, lambda(j), lambda(j), gamma, cps[i]);
+                            } else {
+                                BTemp(i) = SCAD(G1, lambda(j), lambda(j), gamma, cps[i]);
+                            }
 
+                            double shift = BTemp(i) - BOLD(i);
+                            if (shift != 0) {
+                                r = r - trans(shift * Z.row(i));
+                            }
+                        }
+                    }
+                    vec thresh1 = abs(trans(BTemp) - trans(BOLD));
+                    thresh = norm(thresh1, "inf");
+                    BOLD = BTemp;
 
-						thresh=0;
-						for(int i = 0; i < pk; ++i)
-							{
-								if(active(i)!=0){
-									vec  Z2=trans(Z.row(i));
-									
-									double G1=as_scalar(trans(r)*Z2)/T+BOLD(i)*cps(i);// *cross(Z2,Z2);
-									// if(mcp){
-									// 	BTemp(i)=MCP_pen(G1,lambda(j),gamma);
-									// }else{
-									// 	BTemp(i)=scad_pen(G1,lambda(j),gamma);
-									// }
-									// l1 = lam * m[j] * alpha;
-									// l2 = lam * m[j] * (1-alpha);
+                    if (thresh < tol * sdy) {
+                        break;
+                    }
+                    counter2 += 1;
+                }
 
-									if(mcp){
-										BTemp(i)=MCP(G1, lambda(j), lambda(j), gamma, cps[i]);
-									}else{
-										BTemp(i)=SCAD(G1, lambda(j), lambda(j), gamma, cps[i]);
-									}
-
-									double shift=BTemp(i)-BOLD(i);
-
-						 
-									if(shift!=0){
-										r=r-trans(shift*Z.row(i));
-
-									}
-								}
-
-							}
-						vec thresh1=abs(trans(BTemp)-trans(BOLD));
-						thresh=norm(thresh1,"inf");
-
-						// Rcout<<"thresh"<<thresh<<endl;
-
-						BOLD=BTemp;
-
-									
-						if(thresh<tol*sdy){
-							break;
-						}
-						counter2 += 1;
-					}
-
-				// Rcout<<"TEST"<<endl;
-
-				int violations=0;
-				for(int i = 0; i < pk; ++i){
-					// Rcout<<active(i)<<endl;
-					if(active(i)==0){
-
-						vec  Z2=trans(Z.row(i));
-						
-						double G1=as_scalar(trans(r)*Z2)/T;// +BOLD(i);
-						// Rcout<<G1<<endl;
-						if(mcp){
-							BTemp(i)=MCP(G1, lambda(j), lambda(j), gamma, cps[i]);
-						}else{
-							BTemp(i)=SCAD(G1, lambda(j), lambda(j), gamma, cps[i]);
+				int violations = 0;
+				for (int i = 0; i < pk; ++i) {
+					if (active(i) == 0 && restrict(i)) {
+						vec Z2 = trans(Z.row(i));
+						double G1 = as_scalar(trans(r) * Z2) / T;// +BOLD(i);
+						if (mcp) {
+							BTemp(i) = MCP(G1, lambda(j), lambda(j), gamma, cps[i]);
+						} else {
+							BTemp(i) = SCAD(G1, lambda(j), lambda(j), gamma, cps[i]);
 						}
 
-						if(BTemp(i)!=0){
-							// Rcout<<"active"<<endl;
-							active(i)=1;
-							r=r-trans(BTemp(i)*Z.row(i));
-							violations+=1;
+						if (BTemp(i) != 0){
+							active(i) = 1;
+							r = r - trans(BTemp(i) * Z.row(i));
+							violations += 1;
 						}
-						 	
 					}
 				}
-				BOLD=BTemp;
-				// Rcout<<"violations"<<violations<<endl;
-				if(violations==0) break;
+				BOLD = BTemp;
+				if (violations == 0) break;
 			}
-			
-		
-			// Rcout<<counter<<endl;
-			// BTemp.print();
 			BPH.row(jj) = BTemp;
 		}
-		B.slice(j)=BPH;
+		B.slice(j) = BPH;
 	}
-	
 	return(B);
 }
 
 // [[Rcpp::export]]
-cube gamloopMCP(NumericVector beta_, const mat& Y, const mat& Z, vec lambda, const double eps, const colvec& YMean2, const colvec& ZMean2, double gamma, bool mcp){
+cube gamloopMCP(NumericVector beta_, const mat& Y, const mat& Z, vec lambda, const double eps, const colvec& YMean2, const colvec& ZMean2, double gamma, mat restrictions, bool mcp){
 
 	IntegerVector dims = beta_.attr("dim");
 	cube bcube(beta_.begin(), dims[0], dims[1], dims[2], false);
@@ -2702,7 +2662,7 @@ cube gamloopMCP(NumericVector beta_, const mat& Y, const mat& Z, vec lambda, con
 	
 	colvec nu = zeros<colvec>(dims[0]);
 
-	bcube = mcp_loop(Y, Z, bcube, lambda, eps, gamma, mcp);
+	bcube = mcp_loop(Y, Z, bcube, lambda, eps, gamma, restrictions, mcp);
 	for (int i = 0; i < dims[2]; ++i) {
 		mat B1 = bcube.slice(i);
 		nu = YMean2 - B1 * ZMean2;

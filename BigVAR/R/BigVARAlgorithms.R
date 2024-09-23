@@ -1,4 +1,4 @@
-.MCPFit <- function(B, Z, Y, lambda, eps, MN, C, group, gamma = 3, YMean, ZMean) {
+.MCPFit <- function(B, Z, Y, lambda, eps, MN, C, group, gamma = 3, YMean, ZMean, restrictions) {
   nc <- apply(B, 3, ncol)[1]
   BINI <- B[, 2:nc, , drop = F]
   if (group == "MCP") {
@@ -7,7 +7,7 @@
     mcp <- FALSE
   }
 
-  beta <- gamloopMCP(BINI, Y, Z, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), gamma = gamma, mcp)
+  beta <- gamloopMCP(BINI, Y, Z, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), gamma = gamma, restrictions, mcp)
 
   if (MN) {
     beta <- adjust_mn_var(beta, C)

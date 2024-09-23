@@ -42,7 +42,7 @@
 
 
   if (group == "MCP" | group == "SCAD") {
-    beta <- .MCPFit(beta, trainZ, trainY, lambda, tol, MN, C, group, gamma, YMean, ZMean)
+    beta <- .MCPFit(beta, trainZ, trainY, lambda, tol, MN, C, group, gamma, YMean, ZMean, restrictions)
   }
 
   if (group == "BasicEN") {

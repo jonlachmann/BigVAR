@@ -109,11 +109,11 @@ GamLoopSGLXDP <- function(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjc
     .Call('_BigVAR_GamLoopSGLXDP', PACKAGE = 'BigVAR', beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1)
 }
 
-mcp_loop <- function(Y, Z, B, lambda, tol, gamma, mcp = TRUE) {
-    .Call('_BigVAR_mcp_loop', PACKAGE = 'BigVAR', Y, Z, B, lambda, tol, gamma, mcp)
+mcp_loop <- function(Y, Z, B, lambda, tol, gamma, restrictions, mcp = TRUE) {
+    .Call('_BigVAR_mcp_loop', PACKAGE = 'BigVAR', Y, Z, B, lambda, tol, gamma, restrictions, mcp)
 }
 
-gamloopMCP <- function(beta_, Y, Z, lambda, eps, YMean2, ZMean2, gamma, mcp) {
-    .Call('_BigVAR_gamloopMCP', PACKAGE = 'BigVAR', beta_, Y, Z, lambda, eps, YMean2, ZMean2, gamma, mcp)
+gamloopMCP <- function(beta_, Y, Z, lambda, eps, YMean2, ZMean2, gamma, restrictions, mcp) {
+    .Call('_BigVAR_gamloopMCP', PACKAGE = 'BigVAR', beta_, Y, Z, lambda, eps, YMean2, ZMean2, gamma, restrictions, mcp)
 }
 
