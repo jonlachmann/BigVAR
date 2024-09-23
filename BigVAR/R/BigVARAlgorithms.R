@@ -365,7 +365,7 @@
   return(betafin)
 }
 
-.lassoVARFistX <- function(B, Z, Y, lambda, eps, p, MN, k, k1, s, C, YMean, ZMean, separate_lambdas = FALSE) {
+.lassoVARFistX <- function(B, Z, Y, lambda, eps, p, MN, k, k1, s, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -375,7 +375,7 @@
   nc <- apply(B, 3, ncol)[1]
 
   BINI <- B[, 2:nc, , drop = F]
-  beta <- gamloopFista(BINI, Y, Z, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), B1, k, p, tk, k1, s, separate_lambdas)
+  beta <- gamloopFista(BINI, Y, Z, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), B1, k, p, tk, k1, s, restrictions, separate_lambdas)
 
   if (MN) {
     beta <- adjust_mn_var(beta, C)
@@ -384,7 +384,7 @@
 }
 
 # general basic/elastic net
-.lassoVARFistXEN <- function(B, Z, Y, lambda, alpha, eps, p, MN, k, k1, s, C, YMean, ZMean, separate_lambdas = FALSE) {
+.lassoVARFistXEN <- function(B, Z, Y, lambda, alpha, eps, p, MN, k, k1, s, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -398,7 +398,7 @@
   ## if (length(alpha) == 1) { alpha <- rep(alpha, dim(B)[3]) }
   beta <- gamloopFistaEN(
     BFOO, Y, Z, as.matrix(lambda), as.matrix(alpha), eps, as.matrix(YMean), as.matrix(ZMean), BFOO1,
-    k, p, tk, k1, s, separate_lambdas
+    k, p, tk, k1, s, restrictions, separate_lambdas
   )
 
   if (MN) {

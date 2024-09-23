@@ -48,19 +48,28 @@ double ST1a(double z,double gam){
 // Columnwise softthresholding
 
 // [[Rcpp::export]]
-colvec ST3a(colvec z ,double gam)
-{
-
-	int n=z.size();
-
+colvec ST3a(colvec z, double gam) {
+	int n = z.size();
 	colvec z1(n);
-	for( int i=0; i<n;++i)
-		{
-			double z11=z(i);
-			z1(i)=ST1a(z11,gam);
+	for (int i = 0; i < n; ++i) {
+        double z11 = z(i);
+        z1(i) = ST1a(z11, gam);
+    }
+	return(z1);
+}
 
-		}
-
+// [[Rcpp::export]]
+colvec ST3ares(colvec z, double gam, colvec restrictions) {
+	int n = z.size();
+	colvec z1(n);
+	for (int i = 0; i < n; ++i) {
+        if (restrictions[i]) {
+            z1(i) = 0.0;
+        } else {
+            double z11 = z(i);
+            z1(i) = ST1a(z11, gam);
+        }
+    }
 	return(z1);
 }
 
@@ -118,51 +127,37 @@ rowvec ST3bc(rowvec& z,double gam)
 }
 
 // Lasso Fista Function
-mat FistaLV(const mat& Y, const mat& Z, mat& B, const rowvec gam, const double eps, double tk, int k,int p,bool sep_lambda=false)
-{
-	B=trans(B);
-	colvec B1=B.col(0);
- 
+mat FistaLV(const mat& Y, const mat& Z, mat& B, const rowvec gam, const double eps, double tk, int k, int p, mat restrictions, bool sep_lambda = false){
+	B = trans(B);
+	restrictions = trans(restrictions);
+	colvec B1 = B.col(0);
 	double j = 1;
-  
-	for( int i =0; i<k; ++i)
-		{
-			B1=B.col(i);
-			colvec BOLD=B.col(i);
-			colvec BOLDOLD=BOLD;
-			double thresh=10*eps;
-			j=1;
-			double tempgam;
-			double maxiters=1000;
-			if(sep_lambda){
-				tempgam=gam(i);
-			}else{
-				tempgam=gam(0);
-			}
-			while((thresh>eps) & (j<maxiters))
-				{
-
-					colvec v=BOLD+((j-2)/(j+1))*(BOLD-BOLDOLD);
-
-					B1=ST3a(vectorise(v)+tk*vectorise((trans(Y.col(i))-trans(v)*Z)*trans(Z)),tempgam*tk);
-					thresh=max(abs(B1-v));
-					BOLDOLD=BOLD;
-					BOLD=B1;
-					j+=1;
-
-
-				}
-
-			B.col(i)=B1;
-
-		}
-
-	// Rcout<<"iterations"<<j<<std::endl;
-	// 
-	// Rcout<<"maxiters"<<j<<std::endl;
+	for (int i = 0; i < k; ++i) {
+        B1 = B.col(i);
+        colvec restrict = restrictions.col(i);
+        colvec BOLD = B.col(i);
+        colvec BOLDOLD = BOLD;
+        double thresh = 10 * eps;
+        j = 1;
+        double tempgam;
+        double maxiters = 1000;
+        if (sep_lambda) {
+            tempgam = gam(i);
+        } else {
+            tempgam = gam(0);
+        }
+        while ((thresh > eps) & (j < maxiters)) {
+            colvec v = BOLD + ((j - 2) / (j + 1)) * (BOLD - BOLDOLD);
+            B1 = ST3ares(vectorise(v) + tk * vectorise((trans(Y.col(i)) - trans(v) * Z) * trans(Z)), tempgam * tk, restrict);
+            thresh = max(abs(B1 - v));
+            BOLDOLD = BOLD;
+            BOLD = B1;
+            j += 1;
+        }
+        B.col(i) = B1;
+	}
 	
-	B=trans(B);
-
+	B = trans(B);
 	return(B);
 
 } 
@@ -170,86 +165,70 @@ mat FistaLV(const mat& Y, const mat& Z, mat& B, const rowvec gam, const double e
 
 
 // Lasso Fista Function
-mat FistaLVEN(const mat& Y, const mat& Z, mat& B, const rowvec gam,double alpha, const double eps, double tk, int k,int p,bool sep_lambda=false)
-{
-	B=trans(B);
-	colvec B1=B.col(0);
+mat FistaLVEN(const mat& Y, const mat& Z, mat& B, const rowvec gam,double alpha, const double eps, double tk, int k,int p, mat restrictions, bool sep_lambda = false) {
+	B = trans(B);
+	restrictions = trans(restrictions);
+	colvec B1 = B.col(0);
  
 	double j = 1;
-	mat I(Z.n_cols,Z.n_cols);
+	mat I(Z.n_cols, Z.n_cols);
 	I.eye();
-	// Rcout<<"k"<<k<<std::endl;
-	for( int i =0; i<k; ++i)
-		{
-			// Rcout<<i<<std::endl;
-			B1=B.col(i);
-			colvec BOLD=B.col(i);
-			colvec BOLDOLD=BOLD;
-			double thresh=10*eps;
-			j=1;
-			double tempgam;
-			double maxiters=1000;
+	for (int i = 0; i < k; ++i) {
+        B1 = B.col(i);
+        colvec restrict = restrictions.col(i);
+        colvec BOLD = B.col(i);
+        colvec BOLDOLD = BOLD;
+        double thresh = 10 * eps;
+        j = 1;
+        double tempgam;
+        double maxiters = 1000;
 
-			// Rcout<<gam<<std::endl;
+        if (sep_lambda) {
+            tempgam = gam(i);
+        } else {
+            tempgam = gam(0);
+        }
 
-			if(sep_lambda){
-				tempgam=gam(i);
-			}else{
-				tempgam=gam(0);
-			}
-
-			while((thresh>eps) & (j<maxiters))
-				{
-
-					colvec v=BOLD+((j-2)/(j+1))*(BOLD-BOLDOLD);
-					//From Friedman et al
-					B1=ST3a(vectorise(v)+tk*vectorise((trans(Y.col(i))-trans(v)*Z)*trans(Z)),tempgam*tk*alpha)/(1+tempgam*tk*(1-alpha));
-					thresh=max(abs(B1-v));	
-					BOLDOLD=BOLD;
-					BOLD=B1;
-					j+=1;
-
-
-				}
-
-			B.col(i)=B1;
-
-		}
-
-
-	B=trans(B);
-
+        while ((thresh > eps) & (j < maxiters)) {
+            colvec v = BOLD + ((j - 2) / (j + 1)) * (BOLD - BOLDOLD);
+            //From Friedman et al
+            B1 = ST3ares(vectorise(v) + tk * vectorise((trans(Y.col(i)) - trans(v) * Z) * trans(Z)), tempgam * tk * alpha, restrict)/(1 + tempgam * tk * (1 - alpha));
+            thresh = max(abs(B1 - v));
+            BOLDOLD = BOLD;
+            BOLD = B1;
+            j += 1;
+        }
+        B.col(i) = B1;
+    }
+	B = trans(B);
 	return(B);
-
 } 
 
 
 //Penalty Loop For FISTA
 
 // [[Rcpp::export]]
-cube gamloopFista(NumericVector beta_, const mat& Y,const mat& Z,const  mat gammgrid, const double eps,const colvec& YMean2, const colvec& ZMean2,mat& B1, int k, int p,double tk, int k1,int s,bool sep_lambda=false){
+cube gamloopFista(NumericVector beta_, const mat& Y, const mat& Z, const mat gammgrid, const double eps,const colvec& YMean2, const colvec& ZMean2, mat& B1, int k, int p,double tk, int k1,int s, mat restrictions, bool sep_lambda=false){
 
-	mat b2=B1;
-	mat B1F2=B1;
-	// const int ngridpts=gammgrid.size();
-	IntegerVector dims=beta_.attr("dim");
+	mat b2 = B1;
+	mat B1F2 = B1;
+	IntegerVector dims = beta_.attr("dim");
 	
-	cube bcube(beta_.begin(),dims[0],dims[1],dims[2],false);
-	cube bcube2(dims[0],dims[1]+1,dims[2]);
+	cube bcube(beta_.begin(), dims[0], dims[1], dims[2], false);
+	cube bcube2(dims[0], dims[1] + 1, dims[2]);
 	bcube2.fill(0);
 	int nseries = dims[0];
-	colvec nu=zeros<colvec>(dims[0]);
+	colvec nu = zeros<colvec>(dims[0]);
 	// double gam =0;
 
-	int i;
 	//loop through candidate lambda values
-	for (i=0; i<dims[2];++i) {
-		rowvec gam=gammgrid.row(i);
+	for (int i = 0; i < dims[2]; ++i) {
+		rowvec gam = gammgrid.row(i);
 		
-		mat B1F2=bcube.slice(i);
-		B1 = FistaLV(Y,Z,B1F2,gam,eps,tk,nseries,p,sep_lambda); 
+		mat B1F2 = bcube.slice(i);
+		B1 = FistaLV(Y, Z, B1F2, gam, eps, tk, nseries, p, restrictions, sep_lambda);
 		
-		nu = YMean2 - B1 *ZMean2;
+		nu = YMean2 - B1 * ZMean2;
 		bcube2.slice(i) = mat(join_horiz(nu, B1)); 
 	}
 
@@ -258,7 +237,7 @@ cube gamloopFista(NumericVector beta_, const mat& Y,const mat& Z,const  mat gamm
 
 
 // [[Rcpp::export]]
-cube gamloopFistaEN(NumericVector beta_, const mat& Y,const mat& Z,const  mat gammgrid,vec& alpha, const double eps,const colvec& YMean2, const colvec& ZMean2,mat& B1, int k, int p,double tk, int k1,int s,bool sep_lambda=false){
+cube gamloopFistaEN(NumericVector beta_, const mat& Y, const mat& Z, const mat gammgrid, vec& alpha, const double eps, const colvec& YMean2, const colvec& ZMean2, mat& B1, int k, int p, double tk, int k1, int s, mat restrictions, bool sep_lambda=false){
 
 	mat b2=B1;
 	mat B1F2=B1;
@@ -296,8 +275,8 @@ cube gamloopFistaEN(NumericVector beta_, const mat& Y,const mat& Z,const  mat ga
 			}
 			
 			mat B1F2=bcube.slice((i)*nalpha+j);
-			B1 = FistaLVEN(Y,Z,B1F2,gam,a_temp,eps,tk,nseries,p,sep_lambda); 
-	  
+			B1 = FistaLVEN(Y,Z,B1F2,gam,a_temp,eps,tk,nseries,p,restrictions,sep_lambda);
+
 			nu = YMean2 - B1 *ZMean2;
 			bcube2.slice((i)*nalpha+j) = mat(join_horiz(nu, B1)); 
 		}
@@ -2794,24 +2773,20 @@ cube mcp_loop(mat Y,mat Z, cube B, const vec lambda,const double tol,double gamm
 }
 
 // [[Rcpp::export]]
-cube gamloopMCP(NumericVector beta_, const mat& Y,const mat& Z, vec lambda, const double eps,const colvec& YMean2, const colvec& ZMean2,double gamma,bool mcp){
+cube gamloopMCP(NumericVector beta_, const mat& Y, const mat& Z, vec lambda, const double eps, const colvec& YMean2, const colvec& ZMean2, double gamma, bool mcp){
 
-	IntegerVector dims=beta_.attr("dim");
-	cube bcube(beta_.begin(),dims[0],dims[1],dims[2],false);
-	cube bcube2(dims[0],dims[1]+1,dims[2]);
+	IntegerVector dims = beta_.attr("dim");
+	cube bcube(beta_.begin(), dims[0], dims[1], dims[2], false);
+	cube bcube2(dims[0], dims[1] + 1, dims[2]);
 	bcube2.fill(0);
 	
-	colvec nu=zeros<colvec>(dims[0]);
-	
-	int i;
+	colvec nu = zeros<colvec>(dims[0]);
 
-	bcube=mcp_loop(Y,Z,bcube,lambda,eps,gamma,mcp);
-	for (i=0; i<dims[2];++i) {
-		
-		mat B1=bcube.slice(i);
-		nu = YMean2 - B1 *ZMean2;
-		bcube2.slice(i) = mat(join_horiz(nu, B1)); 
-
+	bcube = mcp_loop(Y, Z, bcube, lambda, eps, gamma, mcp);
+	for (int i = 0; i < dims[2]; ++i) {
+		mat B1 = bcube.slice(i);
+		nu = YMean2 - B1 * ZMean2;
+		bcube2.slice(i) = mat(join_horiz(nu, B1));
 	}
 
     return(bcube2);

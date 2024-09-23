@@ -197,7 +197,7 @@ VARXConsModel <- function(Y, p, VARX, tf) {
 
 # Construct Lambda Grid:
 .LambdaGrid <- function(gran1, gran2, groups, Y, Z, group, p, k1, s, m, k, MN, alpha, C, intercept, tol, VARX = FALSE, separate_lambdas = FALSE,
-    verbose = FALSE, gamma = 3, linear) {
+    verbose = FALSE, gamma = 3, linear, restrictions) {
 
     nseries <- ifelse(VARX == TRUE, k1, k)
 
@@ -367,7 +367,7 @@ VARXConsModel <- function(Y, p, VARX, tf) {
 
     if (!separate_lambdas) {
         lambdastart <- LGSearch(lambdastart, Y, Z, beta, group, k1, p, s, m, groups, k, MN, alpha, C, intercept, tol, VARX,
-            gamma)
+            gamma, restrictions)
 
         if (!linear) {
             lambda <- exp(seq(from = log(lambdastart), to = log(lambdastart/gran1), length = gran2))
@@ -382,7 +382,7 @@ VARXConsModel <- function(Y, p, VARX, tf) {
 
         for (i in seq_len(ncol(lambda))) {
             lambdastart[i] <- LGSearch(lambdastart[i], Y, Z, beta, group, k1, p, s, m, groups, k, MN, alpha, C, intercept,
-                tol, VARX, gamma)
+                tol, VARX, gamma, restrictions)
             lambdastart[i] <- ifelse(lambdastart[i] == 0, 1e-04, lambdastart[i])
             if (verbose & i%%20 == 0) {
                 print(sprintf("determined lambda grid for series %s", i))
@@ -885,7 +885,7 @@ diaggroupfunVARXcompL <- function(p, k, k1) {
 
 
 # iterative procedure to find a tighter bound for lambda starting value via binary search
-LGSearch <- function(gstart, Y, Z, BOLD, group, k1, p, s, m, gs, k, MN, alpha, C, intercept, tol, VARX, gamma) {
+LGSearch <- function(gstart, Y, Z, BOLD, group, k1, p, s, m, gs, k, MN, alpha, C, intercept, tol, VARX, gamma, restrictions) {
     s1 <- 0
     palpha <- NULL
     tk <- 1/max(Mod(eigen(Z %*% t(Z))$values))
@@ -905,7 +905,7 @@ LGSearch <- function(gstart, Y, Z, BOLD, group, k1, p, s, m, gs, k, MN, alpha, C
         dual <- FALSE
         separate_lambdas <- FALSE
         temp <- .BigVAR.fit(group, BOLD, Z, Y, lambda, tol, p, m, k1, k, s, s1, MN, C, intercept, separate_lambdas, dual,
-            activeset, starting_eigvals, groups, compgroups, VARX, alpha, palpha, gamma)
+            activeset, starting_eigvals, groups, compgroups, VARX, alpha, palpha, gamma, restrictions)
         # remove intercept from consideration
         if (group == "Tapered") {
             param <- adrop(BOLD[, -1, , drop = F], drop = 3)
@@ -1460,7 +1460,7 @@ create_group_indexes <- function(group, p, k, gran2, VARX = FALSE, k1 = NULL, s 
 
 
 create_lambda_grid <- function(trainY, trainZ, groups, gran1, gran2, group, p, k1, s, m, k, MN, alpha, C, intercept, tol,
-    VARX, separate_lambdas, dual, gamma, linear, verbose) {
+    VARX, separate_lambdas, dual, gamma, linear, restrictions, verbose) {
     # Constructs penalty grid if both alpha and lambda are selected
     if (dual) {
         lambda <- matrix(0, nrow = gran2, ncol = length(alpha))
@@ -1477,7 +1477,7 @@ create_lambda_grid <- function(trainY, trainZ, groups, gran1, gran2, group, p, k
         if (group != "BGR") {
 
             lambda <- .LambdaGrid(gran1, gran2, groups, trainY, trainZ, group, p, k1, s, m, k, MN, alpha, C, intercept, tol,
-                VARX = VARX, separate_lambdas, verbose, linear = linear)
+                VARX = VARX, separate_lambdas, verbose, linear = linear, restrictions = restrictions)
         } else {
             # special handling for BGR
             lambda <- seq(1, 5, length = gran2)

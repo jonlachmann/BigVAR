@@ -4,7 +4,7 @@
     group, beta, trainZ, trainY, lambda, tol, p, m = 0, k1, k,
     s = 0, s1 = 0, MN = FALSE, C, intercept = TRUE, separate_lambdas, dual, activeset = NULL,
     starting_eigvals = NULL, groups = NULL, compgroups = NULL, VARX = FALSE, alpha = NULL,
-    palpha = NULL, gamma = 3) {
+    palpha = NULL, gamma = 3, restrictions = NULL) {
   if (is.null(s)) {
     s <- 0
   }
@@ -14,6 +14,11 @@
   if (is.null(m)) {
     m <- 0
   }
+
+  if (is.null(restrictions)) {
+    restrictions <- matrix(0, nrow(beta), ncol(beta) - 1)
+  }
+
   pre_proc <- pre_process(trainY, trainZ, C, MN, intercept)
 
   if (separate_lambdas) {
@@ -21,7 +26,6 @@
       lambda <- matrix(lambda, nrow = 1)
     }
   }
-
 
   trainY <- pre_proc$Y
   trainZ <- pre_proc$Z
@@ -32,7 +36,7 @@
   if (group == "Basic") {
     beta <- .lassoVARFistX(
       beta, trainZ, trainY, lambda, tol, p, MN, k,
-      k1, s + s1, C, YMean, ZMean, separate_lambdas
+      k1, s + s1, C, YMean, ZMean, restrictions, separate_lambdas
     )
   }
 
@@ -44,7 +48,7 @@
   if (group == "BasicEN") {
     beta <- .lassoVARFistXEN(
       beta, trainZ, trainY, lambda, alpha, tol, p, MN, k,
-      k1, s + s1, C, YMean, ZMean, separate_lambdas
+      k1, s + s1, C, YMean, ZMean, restrictions, separate_lambdas
     )
   }
 
@@ -260,7 +264,7 @@
 BigVAR.fit <- function(
     Y, p, struct, lambda, alpha = NULL, VARX = list(), separate_lambdas = F,
     MN = F, C = as.double(NULL), intercept = TRUE, tf = F, tol = 1e-04, RVAR = F, refit_fraction = 1,
-    beta = NULL, gamma = 3) {
+    beta = NULL, gamma = 3, restrictions = NULL) {
   if (!is.matrix(Y)) {
     stop("Y needs to be a matrix")
   }
@@ -383,7 +387,7 @@ BigVAR.fit <- function(
     temp <- .BigVAR.fit(
       group, beta, trainZ, trainY, lambda, tol, p, m, k1, k,
       s, s1, MN, C, intercept, separate_lambdas, dual, activeset, starting_eigvals,
-      groups, compgroups, VARX, alpha, palpha
+      groups, compgroups, VARX, alpha, palpha, restrictions = restrictions
     )
     beta <- temp$beta
   }

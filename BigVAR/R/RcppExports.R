@@ -21,12 +21,16 @@ ST3a <- function(z, gam) {
     .Call('_BigVAR_ST3a', PACKAGE = 'BigVAR', z, gam)
 }
 
-gamloopFista <- function(beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, tk, k1, s, sep_lambda = FALSE) {
-    .Call('_BigVAR_gamloopFista', PACKAGE = 'BigVAR', beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, tk, k1, s, sep_lambda)
+ST3ares <- function(z, gam, restrictions) {
+    .Call('_BigVAR_ST3ares', PACKAGE = 'BigVAR', z, gam, restrictions)
 }
 
-gamloopFistaEN <- function(beta_, Y, Z, gammgrid, alpha, eps, YMean2, ZMean2, B1, k, p, tk, k1, s, sep_lambda = FALSE) {
-    .Call('_BigVAR_gamloopFistaEN', PACKAGE = 'BigVAR', beta_, Y, Z, gammgrid, alpha, eps, YMean2, ZMean2, B1, k, p, tk, k1, s, sep_lambda)
+gamloopFista <- function(beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, tk, k1, s, restrictions, sep_lambda = FALSE) {
+    .Call('_BigVAR_gamloopFista', PACKAGE = 'BigVAR', beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, tk, k1, s, restrictions, sep_lambda)
+}
+
+gamloopFistaEN <- function(beta_, Y, Z, gammgrid, alpha, eps, YMean2, ZMean2, B1, k, p, tk, k1, s, restrictions, sep_lambda = FALSE) {
+    .Call('_BigVAR_gamloopFistaEN', PACKAGE = 'BigVAR', beta_, Y, Z, gammgrid, alpha, eps, YMean2, ZMean2, B1, k, p, tk, k1, s, restrictions, sep_lambda)
 }
 
 Eigencomp <- function(Z1, groups, n1, k1) {
