@@ -16,7 +16,7 @@
   }
 
   if (is.null(restrictions)) {
-    restrictions <- matrix(0, nrow(beta), ncol(beta) - 1)
+    restrictions <- matrix(1, nrow(beta), ncol(beta) - 1)
   }
 
   pre_proc <- pre_process(trainY, trainZ, C, MN, intercept)

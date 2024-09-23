@@ -487,7 +487,7 @@ constructModel <- function(Y, p, struct, gran, h = 1, cv = "Rolling", verbose = 
         separate_lambdas <- FALSE
     }
     if (is.null(restrictions)) {
-        restrictions <- matrix(0, ncol(var_data$trainY), nrow(var_data$trainZ))
+        restrictions <- matrix(1, ncol(var_data$trainY), nrow(var_data$trainZ))
     }
                                (BV1 <- new("BigVAR", Data = Y, model_data = var_data, lagmax = p, Structure = struct, Relaxed = RVAR, Granularity = gran,
                                            Minnesota = MN, verbose = verbose, horizon = h, crossval = cv, ic = IC, VARX = VARX, VARXI = VARXI, T1 = T1, T2 = T2,
