@@ -181,8 +181,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // GamLoopGL2
-List GamLoopGL2(NumericVector beta_, List Activeset, NumericVector gamm, const mat& Y1, const mat& Z1, List jj, List jjfull, List jjcomp, double eps, const colvec& YMean2, const colvec& ZMean2, int k, int pk, const List M2f_, const List eigvalF_, const List eigvecF_);
-RcppExport SEXP _BigVAR_GamLoopGL2(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M2f_SEXP, SEXP eigvalF_SEXP, SEXP eigvecF_SEXP) {
+List GamLoopGL2(NumericVector beta_, List Activeset, NumericVector gamm, const mat& Y1, const mat& Z1, List jj, List jjfull, List jjcomp, double eps, const colvec& YMean2, const colvec& ZMean2, int k, int pk, const List M2f_, const List eigvalF_, const List eigvecF_, mat restrictions);
+RcppExport SEXP _BigVAR_GamLoopGL2(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M2f_SEXP, SEXP eigvalF_SEXP, SEXP eigvecF_SEXP, SEXP restrictionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -202,7 +202,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const List >::type M2f_(M2f_SEXP);
     Rcpp::traits::input_parameter< const List >::type eigvalF_(eigvalF_SEXP);
     Rcpp::traits::input_parameter< const List >::type eigvecF_(eigvecF_SEXP);
-    rcpp_result_gen = Rcpp::wrap(GamLoopGL2(beta_, Activeset, gamm, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_));
+    Rcpp::traits::input_parameter< mat >::type restrictions(restrictionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(GamLoopGL2(beta_, Activeset, gamm, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, restrictions));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -597,7 +598,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BigVAR_gamloopFistaEN", (DL_FUNC) &_BigVAR_gamloopFistaEN, 16},
     {"_BigVAR_Eigencomp", (DL_FUNC) &_BigVAR_Eigencomp, 4},
     {"_BigVAR_EigencompOO", (DL_FUNC) &_BigVAR_EigencompOO, 4},
-    {"_BigVAR_GamLoopGL2", (DL_FUNC) &_BigVAR_GamLoopGL2, 16},
+    {"_BigVAR_GamLoopGL2", (DL_FUNC) &_BigVAR_GamLoopGL2, 17},
     {"_BigVAR_GamLoopGLOO", (DL_FUNC) &_BigVAR_GamLoopGLOO, 17},
     {"_BigVAR_GamLoopSGLOO", (DL_FUNC) &_BigVAR_GamLoopSGLOO, 17},
     {"_BigVAR_GamLoopSGLOODP", (DL_FUNC) &_BigVAR_GamLoopSGLOODP, 17},

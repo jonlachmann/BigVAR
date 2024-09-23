@@ -56,7 +56,7 @@
   if (group == "Lag") {
     GG <- .GroupLassoVAR1(
       beta, groups, compgroups, trainY, trainZ, lambda, activeset,
-      tol, p, MN, k, k1, s + s1, C, YMean, ZMean
+      tol, p, MN, k, k1, s + s1, C, YMean, ZMean, restrictions
     )
 
     beta <- GG$beta

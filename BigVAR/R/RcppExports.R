@@ -41,8 +41,8 @@ EigencompOO <- function(ZZ1, groups, n1, k) {
     .Call('_BigVAR_EigencompOO', PACKAGE = 'BigVAR', ZZ1, groups, n1, k)
 }
 
-GamLoopGL2 <- function(beta_, Activeset, gamm, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_) {
-    .Call('_BigVAR_GamLoopGL2', PACKAGE = 'BigVAR', beta_, Activeset, gamm, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_)
+GamLoopGL2 <- function(beta_, Activeset, gamm, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, restrictions) {
+    .Call('_BigVAR_GamLoopGL2', PACKAGE = 'BigVAR', beta_, Activeset, gamm, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, restrictions)
 }
 
 GamLoopGLOO <- function(beta_, Activeset, gamm, Y, Z, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, k1) {

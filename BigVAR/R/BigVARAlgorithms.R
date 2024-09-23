@@ -137,7 +137,7 @@
 
 
 # Lag Group (VAR/VARX-L)
-.GroupLassoVAR1 <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, k, k1, s, C, YMean, ZMean) {
+.GroupLassoVAR1 <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, k, k1, s, C, YMean, ZMean, restrictions) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -154,7 +154,7 @@
   beta <- beta[, 2:dim(beta)[2], , drop = F]
   BB <- GamLoopGL2(
     beta, INIactive, lambda, Y, Z, groups, fullgroups, compgroups, eps, YMean, ZMean, k1, p * k1 + m * s,
-    M2, eigvals, eigvecs
+    M2, eigvals, eigvecs, restrictions
   )
 
   if (MN) {
