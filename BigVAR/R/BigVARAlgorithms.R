@@ -19,7 +19,7 @@
 
 # Sparse Own/Other (VAR)
 .SparseGroupLassoVAROO <- function(beta, Y, Z, lambda, alpha, INIactive, eps, q1a, p, MN, dual = FALSE,
-                                   C, YMean, ZMean) {
+                                   C, YMean, ZMean, restrictions) {
   k <- ncol(Y)
   Y <- t(Y)
   m <- 0
@@ -44,12 +44,12 @@
   if (!dual) {
     BB <- GamLoopSGLOO(
       beta, INIactive, lambda, alpha, Y, ZZ, jj, jj, jjcomp, eps, YMean, ZMean, k, p * k, M2f, eigs,
-      m
+      m, restrictions
     )
   } else {
     BB <- GamLoopSGLOODP(
       beta, INIactive, lambda, alpha, Y, ZZ, jj, jj, jjcomp, eps, YMean, ZMean, k, p * k, M2f, eigs,
-      m
+      m, restrictions
     )
   }
 
@@ -303,7 +303,7 @@
 
 # Sparse Own/Other (VARX)
 .SparseGroupLassoVAROOX <- function(beta, groups, compgroups, Y, Z, lambda, alpha, INIactive, eps, p, MN, k1, s, k, dual = FALSE,
-                                    C, YMean, ZMean) {
+                                    C, YMean, ZMean, restrictions) {
   m <- k - k1
 
   Y <- t(Y)
@@ -335,11 +335,11 @@
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, k1 * p + m * s, gran2))
   if (dual) {
     BB <- GamLoopSGLOODP(beta, INIactive, lambda, alpha, Y, ZZ, groups, groups, compgroups, eps, YMean, ZMean, k1, p *
-      k1 + m * s, M2f, eigs, m)
+      k1 + m * s, M2f, eigs, m, restrictions)
   } else {
     BB <- GamLoopSGLOO(
       beta, INIactive, lambda, alpha, Y, ZZ, groups, fullgroups, compgroups, eps, YMean, ZMean, k1,
-      p * k1 + m * s, M2f, eigs, m
+      p * k1 + m * s, M2f, eigs, m, restrictions
     )
   }
   if (MN) {

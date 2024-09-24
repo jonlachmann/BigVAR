@@ -125,13 +125,13 @@
       GG <- .SparseGroupLassoVAROOX(beta, groups, compgroups, trainY, trainZ,
         lambda, alpha,
         INIactive = activeset, tol, p, MN, k1, s + s1, k, dual,
-        C, YMean, ZMean
+        C, YMean, ZMean, restrictions
       )
     } else {
       GG <- .SparseGroupLassoVAROO(beta, trainY, trainZ,
         lambda, alpha,
         INIactive = activeset, tol, starting_eigvals, p, MN,
-        dual, C, YMean, ZMean
+        dual, C, YMean, ZMean, restrictions
       )
 
       starting_eigvals <- GG$q1

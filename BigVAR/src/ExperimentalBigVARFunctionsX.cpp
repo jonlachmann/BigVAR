@@ -995,26 +995,16 @@ mat sparseWLOO(const mat& M1a, const colvec& R1, const double ngroups, colvec& b
 	return(beta);
 }
 
-List blockUpdateSGLOO(colvec& beta, const mat& Z1, double lam, double alpha, const colvec& Y2, double eps, List groups_, const List fullgroups_, List compgroups_, const List M2f_, const NumericVector Eigs_, double k1, double m) {
+List blockUpdateSGLOO(colvec& beta, const mat& Z1, double lam, double alpha, const colvec& Y2, double eps, List groups_, const List fullgroups_, List compgroups_, const List M2f_, const NumericVector Eigs_, double k1, double m, mat restrictions) {
 	int n1 = groups_.size();
 	List active(n1);
-	// Rcout<<n1<<endl;
-	// int n=beta2.n_rows, m=beta2.n_cols;
-
-	// colvec beta=vectorise(beta2);
-
 	colvec betaPrev = beta;
-
 	int converge = 0;
 	int count = 0;
 	colvec one = ones<vec>(beta.n_elem);
-	// arma:: colvec Y2=arma::vectorise(Y1,0);
-
 	if (groups_.size() == count) {
-        // Rcout<<"No Active groups"<<endl;
-        // beta.zeros(n,m);
         beta.zeros();
-        active=groups_;
+        active = groups_;
 	} else {
 		for (int i = 0; i < n1; ++i) {
             arma::uvec s4 = as<arma::uvec>(groups_[i]);
@@ -1025,16 +1015,12 @@ List blockUpdateSGLOO(colvec& beta, const mat& Z1, double lam, double alpha, con
                 beta.elem(s45F) = arma::zeros(s45F.n_elem);
                 active(i) = 0;
             } else {
-                const arma::mat M2a= Z1.cols(scomp2);
-                const arma::colvec a1= beta.elem(scomp2);
-                const arma::colvec beta2=beta.elem(s4);
-
-                const arma::colvec r=Y2-M2a*a1;
-
-                const mat M1=Z1.cols(s4);
-                const arma::mat p=-trans(M1)*(r-M1*beta2);
-
-
+                const arma::mat M2a = Z1.cols(scomp2);
+                const arma::colvec a1 = beta.elem(scomp2);
+                const arma::colvec beta2 = beta.elem(s4);
+                const arma::colvec r = Y2 - M2a * a1;
+                const mat M1 = Z1.cols(s4);
+                const arma::mat p = -trans(M1) * (r - M1 * beta2);
                 double rho = sqrt(static_cast<double>(s4.n_elem));
                 colvec STS;
                 if (alpha > 0) {
@@ -1047,39 +1033,19 @@ List blockUpdateSGLOO(colvec& beta, const mat& Z1, double lam, double alpha, con
                 if (arma::norm(STS,"fro") <= lamadj) {
                     arma::colvec astar = arma::zeros(s4.n_elem);
                     active(i) = 0;
-                    // Rcout<<"non active coef"<<endl;
                     beta.elem(s4) = astar;
                 } else {
                     colvec betaS = beta.elem(s4);
                     const double t = 1 / Eigs_(i);
-                    // Rcout<<"group"<<s4<<endl;
-
-                    // s4.print("group:");
-
-                    // vec s4colvec=conv_to<vec>::from(s4);
-                    // Rcout<<"group "<< s4colvec <<endl;
-
-                    // colvec betaprint = betaPrev.elem(s4);
-                    // Rcout<<"betaS "<< betaS <<endl;
-                    // Rcout<<"betaPrev "<< betaprint <<endl;
-                    // double ngroups=(double) M1.n_rows;
-                    // double ngroups=(double) 16;// k1+m
-                    // double ngroups=(double)  k1+m;
                     double ngroups = (double) Y2.n_elem;
-
-                    // Rcout<<ngroups<<endl;
-                    const  mat astar2 = sparseWLOO(M1, r, ngroups, betaS, t, alpha, lam, eps,rho);
-
-                    // Rcout<<"astar 2"<< astar2 <<endl;
-                    beta.elem(s4) = astar2;
+                    const  mat astar2 = sparseWLOO(M1, r, ngroups, betaS, t, alpha, lam, eps, rho);
+                    beta.elem(s4) = astar2 % restrictions.elem(s4);
                     active(i) = s4;
                 }
             }
         }
 	}
 	double thresh = max(abs(beta - betaPrev) / (one + abs(betaPrev)));
-	// Rcout<<"Max coef"<<max(beta)<<std::endl;
-	// Rcout<<"group  update threshold"<<thresh<<std::endl;
 	if (thresh < eps) {
 		converge = 1;
 	} else {
@@ -1091,164 +1057,128 @@ List blockUpdateSGLOO(colvec& beta, const mat& Z1, double lam, double alpha, con
 }
 
 
-mat ThreshUpdateSGLOO(colvec& betaActive,const mat& Z,const double lam,const colvec& Y,const double eps, List groups_, const List fullgroups_,const List compgroups_,const List M2f_,const NumericVector eigs_,const double alpha,double k1,double m)
-{
-    
-	int n1=groups_.size();
-	colvec betaLast=betaActive;
+mat ThreshUpdateSGLOO(colvec& betaActive, const mat& Z, const double lam, const colvec& Y, const double eps, List groups_, const List fullgroups_, const List compgroups_, const List M2f_, const NumericVector eigs_, const double alpha, double k1, double m, mat restrictions) {
+    int n1 = groups_.size();
+	colvec betaLast = betaActive;
 	List active(n1);
-	int count=0;
+	int count = 0;
 	List betaActive2(3);
-	for(int i=0; i<n1; ++i)
-		{
-			NumericVector g1=groups_[i];
-			count+=g1.size();
-
-		}
-	// Rcout<<"active"<<count<<endl;
+	for (int i = 0; i < n1; ++i) {
+        NumericVector g1 = groups_[i];
+        count += g1.size();
+    }
 	
-	if(count==n1)
-		{
-			// Rcout<<"no active coefs"<<count<<endl;
-			betaActive.zeros();
-
-			active=groups_;
-		}else{
-		int converge=0;
-		double th=10*eps;
-		int iters=0;
-		while((converge==0) && (th>eps))	
-			{
-				colvec betaOld=betaActive;
-				betaActive2=blockUpdateSGLOO(betaActive,Z,lam,alpha,Y,eps,groups_,fullgroups_,compgroups_,M2f_,eigs_,k1,m);	 
-				betaActive=as<colvec>(betaActive2("beta"));
-				converge =betaActive2("Converge");
-				iters+=1;
-				th=betaActive2("thresh");
-				if(iters>1000){
-
-					// Rcout<<"max iters reached"<<th<<std::endl;
-					break;
-				}
-			}
+	if (count == n1) {
+        betaActive.zeros();
+        active = groups_;
+    } else {
+		int converge = 0;
+		double th = 10 * eps;
+		int iters = 0;
+		while ((converge == 0) && (th > eps)) {
+            colvec betaOld = betaActive;
+            betaActive2 = blockUpdateSGLOO(betaActive, Z, lam, alpha, Y, eps, groups_, fullgroups_, compgroups_, M2f_, eigs_, k1, m, restrictions);
+            betaActive = as<colvec>(betaActive2("beta"));
+            converge = betaActive2("Converge");
+            iters += 1;
+            th = betaActive2("thresh");
+            if (iters > 1000) {
+                break;
+            }
+        }
 	}
     return(betaActive);
 }
 
 //Loop through Lambda values, Sparse Own/Other VARX-L
 // [[Rcpp::export]]
-List GamLoopSGLOO(NumericVector beta_,const List Activeset_,const NumericVector gamm,const double alpha,const mat& Y,const mat& Z,List jj_,const List jjfull_, List jjcomp_,const double eps,const colvec& YMean2,const colvec& ZMean2,const int k1,const int pk,const List M2f_,const NumericVector eigs_,double m)
-{
-
-	// int gran2=gamm.size();
-	IntegerVector dims=beta_.attr("dim");
-
-	int gran2=dims[2];
+List GamLoopSGLOO(NumericVector beta_, const List Activeset_, const NumericVector gamm, const double alpha, const mat& Y, const mat& Z, List jj_, const List jjfull_, List jjcomp_, const double eps, const colvec& YMean2, const colvec& ZMean2, const int k1, const int pk, const List M2f_, const NumericVector eigs_, double m, mat restrictions) {
+	IntegerVector dims = beta_.attr("dim");
+	int gran2 = dims[2];
 	List activefinal(gran2);
-	cube beta2(beta_.begin(),dims[0],dims[1],gran2,false);
-	cube betafin(dims[0],dims[1]+1,gran2);
+	cube beta2(beta_.begin(), dims[0], dims[1], gran2, false);
+	cube betafin(dims[0], dims[1] + 1, gran2);
 	betafin.fill(0);
 	List iterations(gran2);
-	mat betaPrev=zeros<mat>(dims[0],dims[1]);
-	NumericVector betaF2(dims[0]*dims[1]);
-	const arma:: colvec& Y2=arma::vectorise(Y,0);
+	mat betaPrev = zeros<mat>(dims[0], dims[1]);
+	NumericVector betaF2(dims[0] * dims[1]);
+	const arma::colvec& Y2 = arma::vectorise(Y, 0);
 	int converge;
-	for(int i=0; i<gran2;++i)
-		{
-			double gam=gamm[i];
-			// Rcout<<i<<endl;
-			betaPrev=beta2.slice(i);
-			List Active = Activeset_[i];
-			converge=0;
-			colvec B=vectorise(betaPrev);
-			List betaFull(3);
-			//Three components in the list
-			int iters=0;
-			int maxiters=100;
-			while(converge==0 && iters<maxiters )
-				{
-					B = ThreshUpdateSGLOO(B, Z, gam, Y2, eps, Active, jjfull_, jjcomp_, M2f_, eigs_, alpha,(double) k1,m);
- 
-					betaFull=blockUpdateSGLOO(B,Z,gam,alpha,Y2,eps,jjfull_,jjfull_,jjcomp_,M2f_,eigs_,(double) k1,m);
-
-					betaF2=as<NumericVector>(betaFull("beta"));
-
-					Active=betaFull("active");
-					converge =betaFull("Converge");
-					iters+=1;
-				}
-			// Rcout<<"Number of iterations" << iters <<endl;
-			mat betaF(betaF2.begin(),k1,pk,false);
-			colvec nu= YMean2 - betaF *ZMean2;
-			betafin.slice(i)=mat(join_horiz(nu, betaF));
-			activefinal[i]=Active;
-			iterations[i]=iters; 
-		}
-	List Results=List::create(Named("beta")=betafin,Named("active")=wrap(activefinal),Named("iterations")=iterations,Named("converge")=converge);
+	for (int i = 0; i < gran2; ++i) {
+        double gam = gamm[i];
+        betaPrev = beta2.slice(i);
+        List Active = Activeset_[i];
+        converge = 0;
+        colvec B = vectorise(betaPrev);
+        List betaFull(3);
+        //Three components in the list
+        int iters = 0;
+        int maxiters = 100;
+        while (converge == 0 && iters < maxiters) {
+            B = ThreshUpdateSGLOO(B, Z, gam, Y2, eps, Active, jjfull_, jjcomp_, M2f_, eigs_, alpha, (double) k1, m, restrictions);
+            betaFull = blockUpdateSGLOO(B, Z, gam, alpha, Y2, eps, jjfull_, jjfull_, jjcomp_, M2f_, eigs_, (double) k1, m, restrictions);
+            betaF2 = as<NumericVector>(betaFull("beta"));
+            Active = betaFull("active");
+            converge = betaFull("Converge");
+            iters += 1;
+        }
+        mat betaF(betaF2.begin(), k1, pk, false);
+        colvec nu = YMean2 - betaF * ZMean2;
+        betafin.slice(i) = mat(join_horiz(nu, betaF));
+        activefinal[i] = Active;
+        iterations[i] = iters;
+    }
+	List Results = List::create(Named("beta") = betafin, Named("active") = wrap(activefinal), Named("iterations") = iterations, Named("converge") = converge);
 	return(Results);
 }
 
 
 
 // [[Rcpp::export]]
-List GamLoopSGLOODP(NumericVector beta_,const List Activeset_,mat gamm,const colvec alpha,const mat& Y,const mat& Z,List jj_,const List jjfull_, List jjcomp_,const double eps,const colvec& YMean2,const colvec& ZMean2,const int k1,const int pk,const List M2f_,const NumericVector eigs_,double m)
-{
-
-
-	int nlambda = gamm.n_rows;
+List GamLoopSGLOODP(NumericVector beta_, const List Activeset_, mat gamm, const colvec alpha, const mat& Y, const mat& Z, List jj_, const List jjfull_, List jjcomp_, const double eps, const colvec& YMean2, const colvec& ZMean2, const int k1, const int pk, const List M2f_, const NumericVector eigs_, double m, mat restrictions) {
+    int nlambda = gamm.n_rows;
 	int nalpha = gamm.n_cols;
-	IntegerVector dims=beta_.attr("dim");
-	
+	IntegerVector dims = beta_.attr("dim");
 	List activefinal(dims[2]);
-
-	cube beta2(beta_.begin(),dims[0],dims[1],dims[2],false);
-	cube betafin(dims[0],dims[1]+1,dims[2]);
-
+	cube beta2(beta_.begin(), dims[0], dims[1], dims[2], false);
+	cube betafin(dims[0], dims[1] + 1, dims[2]);
 	betafin.fill(0);
 	List iterations(dims[2]);
-	mat betaPrev=zeros<mat>(dims[0],dims[1]);
-	NumericVector betaF2(dims[0]*dims[1]);
-	const arma:: colvec& Y2=arma::vectorise(Y,0);
+	mat betaPrev = zeros<mat>(dims[0], dims[1]);
+	NumericVector betaF2(dims[0] * dims[1]);
+	const arma:: colvec& Y2 = arma::vectorise(Y, 0);
 	int converge;
 
-	for(int i=0; i<nlambda;++i)
-		{
-			for(int j=0;j<nalpha;++j)
-				{
-					double gam=gamm(i,j);
-					double alpha1=alpha(j);
+	for (int i = 0; i < nlambda; ++i) {
+		for (int j = 0; j < nalpha; ++j) {
+            double gam = gamm(i,j);
+            double alpha1 = alpha(j);
 
-					betaPrev=beta2.slice((i)*nalpha+j);
-					List Active = Activeset_[(i)*nalpha+j];
-					int k2=0;
-					converge=0;
-					colvec B=vectorise(betaPrev);
-					List betaFull(3);
-					//Three components in the list
-					int iters=0;
-					int maxiters=1000;
-					while((converge==0) & (iters<maxiters) )
-						{
-							B = ThreshUpdateSGLOO(B, Z, gam, Y2, eps, Active, jjfull_, jjcomp_, M2f_, eigs_, alpha1,(double) k1,m);
- 
-							betaFull=blockUpdateSGLOO(B,Z,gam,alpha1,Y2,eps,jjfull_,jjfull_,jjcomp_,M2f_,eigs_,(double) k1,m);
-
-							betaF2=as<NumericVector>(betaFull("beta"));
-
-							Active=betaFull("active");
-							converge =betaFull("Converge");
-							iters+=1;
-						}
-					// Rcout<<iters<<endl;
-					mat betaF(betaF2.begin(),dims[0],dims[1],false);
-					colvec nu= YMean2 - betaF *ZMean2;
-					betafin.slice((i)*nalpha+j)=mat(join_horiz(nu, betaF));
-					activefinal[(i)*nalpha+j]=Active;
-					iterations[(i)*nalpha+j]=k2; 
-				}
-
-		}
-	List Results=List::create(Named("beta")=betafin,Named("active")=wrap(activefinal),Named("iterations")=iterations,Named("converge")=converge);
+            betaPrev = beta2.slice((i) * nalpha + j);
+            List Active = Activeset_[(i) * nalpha + j];
+            int k2 = 0;
+            converge = 0;
+            colvec B = vectorise(betaPrev);
+            List betaFull(3);
+            //Three components in the list
+            int iters = 0;
+            int maxiters = 1000;
+            while ((converge == 0) && (iters < maxiters)) {
+                B = ThreshUpdateSGLOO(B, Z, gam, Y2, eps, Active, jjfull_, jjcomp_, M2f_, eigs_, alpha1, (double) k1, m, restrictions);
+                betaFull = blockUpdateSGLOO(B, Z, gam, alpha1, Y2, eps, jjfull_, jjfull_, jjcomp_, M2f_, eigs_, (double) k1, m, restrictions);
+                betaF2 = as<NumericVector>(betaFull("beta"));
+                Active = betaFull("active");
+                converge = betaFull("Converge");
+                iters += 1;
+            }
+            mat betaF(betaF2.begin(), dims[0], dims[1], false);
+            colvec nu = YMean2 - betaF * ZMean2;
+            betafin.slice((i) * nalpha + j) = mat(join_horiz(nu, betaF));
+            activefinal[(i) * nalpha + j] = Active;
+            iterations[(i) * nalpha + j] = k2;
+        }
+    }
+	List Results=List::create(Named("beta") = betafin, Named("active") = wrap(activefinal), Named("iterations") = iterations, Named("converge") = converge);
 	return(Results);
 }
 
