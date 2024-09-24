@@ -84,13 +84,13 @@
         GG <- .SparseGroupLassoVAR(beta, trainY, trainZ,
           lambda, alpha,
           INIactive = activeset, tol, starting_eigvals, p, MN,
-          C, YMean, ZMean
+          C, YMean, ZMean, restrictions
         )
       } else {
         GG <- .SparseGroupLassoVARDual(beta, trainY,
           trainZ, lambda, alpha,
           INIactive = activeset, tol, starting_eigvals,
-          p, MN, C, YMean, ZMean
+          p, MN, C, YMean, ZMean, restrictions
         )
       }
     }
@@ -106,12 +106,12 @@
     if (VARX) {
       GG <- .GroupLassoOOX(
         beta, groups, compgroups, trainY, trainZ, lambda,
-        activeset, tol, p, MN, k, k1, s + s1, C, YMean, ZMean
+        activeset, tol, p, MN, k, k1, s + s1, C, YMean, ZMean, restrictions
       )
     } else {
       GG <- .GroupLassoOO(
         beta, groups, compgroups, trainY, trainZ, lambda, activeset,
-        tol, p, MN, C, YMean, ZMean
+        tol, p, MN, C, YMean, ZMean, restrictions
       )
     }
 

@@ -64,7 +64,7 @@
 
 
 # Sparse Lag (VAR)
-.SparseGroupLassoVAR <- function(beta, Y, Z, lambda, alpha, INIactive, eps, q1a, p, MN, C, YMean, ZMean) {
+.SparseGroupLassoVAR <- function(beta, Y, Z, lambda, alpha, INIactive, eps, q1a, p, MN, C, YMean, ZMean, restrictions) {
   k <- ncol(Y)
 
   Y <- t(Y)
@@ -90,7 +90,7 @@
   beta <- array(beta[, 2:dim(beta)[2], ], dim = c(dims[1], dims[2] - 1, dims[3]))
   BB <- GamLoopSGL(
     beta, INIactive, lambda, alpha, Y, Z, jj, jjfull, jjcomp, eps, YMean, as.matrix(ZMean), k, p * k, M1f,
-    M2f, eigs
+    M2f, eigs, restrictions
   )
   BB$q1 <- q1
 
@@ -103,7 +103,7 @@
 
 # Sparse Lag (VAR) Dual Search
 .SparseGroupLassoVARDual <- function(beta, Y, Z, lambda, alpha, INIactive, eps, q1a, p, MN, C, YMean,
-                                     ZMean) {
+                                     ZMean, restrictions) {
   k <- ncol(Y)
   Y <- t(Y)
   M1f <- list()
@@ -125,7 +125,7 @@
   jjcomp <- .groupfuncomp(p, k)
   dims <- dim(beta)
   beta <- array(beta[, 2:dim(beta)[2], ], dim = c(dims[1], dims[2] - 1, dims[3]))
-  BB <- GamLoopSGLDP(beta, INIactive, lambda, alpha, Y, Z, jj, jjfull, jjcomp, eps, YMean, ZMean, k, p * k, M1f, M2f, eigs)
+  BB <- GamLoopSGLDP(beta, INIactive, lambda, alpha, Y, Z, jj, jjfull, jjcomp, eps, YMean, ZMean, k, p * k, M1f, M2f, eigs, restrictions)
   BB$q1 <- q1
 
   if (MN) {
@@ -166,7 +166,7 @@
 
 # Do I really need a separate function for X vs not?  my guess is no.... should be the case for all of these Group
 # Lasso Own/Other (VARXL)
-.GroupLassoOOX <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, k, k1, s, C, YMean, ZMean) {
+.GroupLassoOOX <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, k, k1, s, C, YMean, ZMean, restrictions) {
   m <- k - k1
   Y <- t(Y)
   ZZ <- kronecker(t(Z), diag(k1))
@@ -181,7 +181,7 @@
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, (k1) * p + m * s, length(lambda)))
 
   BB <- GamLoopGLOO(beta, INIactive, lambda, Y, ZZ, groups, groups_full, compgroups, eps, YMean, ZMean, k1, p * (k1) +
-    m * s, M2, eigvals, eigvecs, k1)
+    m * s, M2, eigvals, eigvecs, k1, restrictions)
 
   if (MN) {
     BB$beta <- adjust_mn_var(BB$beta, C)
@@ -192,7 +192,7 @@
 
 
 # Own/Other Group VAR-L
-.GroupLassoOO <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, C, YMean, ZMean) {
+.GroupLassoOO <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, C, YMean, ZMean, restrictions) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -212,7 +212,7 @@
 
   BB <- GamLoopGLOO(
     beta, INIactive, lambda, Y, ZZ, groups, fullgroups, compgroups, eps, YMean, ZMean, k, p * k, M2, eigvals,
-    eigvecs, k
+    eigvecs, k, restrictions
   )
 
   if (MN) {

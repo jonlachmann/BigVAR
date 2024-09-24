@@ -208,8 +208,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // GamLoopGLOO
-List GamLoopGLOO(NumericVector beta_, List Activeset, NumericVector gamm, const mat& Y, const mat& Z, List jj, List jjfull, List jjcomp, double eps, colvec& YMean2, colvec& ZMean2, int k, int pk, List M2f_, List eigvalF_, List eigvecF_, int k1);
-RcppExport SEXP _BigVAR_GamLoopGLOO(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP YSEXP, SEXP ZSEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M2f_SEXP, SEXP eigvalF_SEXP, SEXP eigvecF_SEXP, SEXP k1SEXP) {
+List GamLoopGLOO(NumericVector beta_, List Activeset, NumericVector gamm, const mat& Y, const mat& Z, List jj, List jjfull, List jjcomp, double eps, colvec& YMean2, colvec& ZMean2, int k, int pk, List M2f_, List eigvalF_, List eigvecF_, int k1, mat restrictions);
+RcppExport SEXP _BigVAR_GamLoopGLOO(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP YSEXP, SEXP ZSEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M2f_SEXP, SEXP eigvalF_SEXP, SEXP eigvecF_SEXP, SEXP k1SEXP, SEXP restrictionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -230,7 +230,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type eigvalF_(eigvalF_SEXP);
     Rcpp::traits::input_parameter< List >::type eigvecF_(eigvecF_SEXP);
     Rcpp::traits::input_parameter< int >::type k1(k1SEXP);
-    rcpp_result_gen = Rcpp::wrap(GamLoopGLOO(beta_, Activeset, gamm, Y, Z, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, k1));
+    Rcpp::traits::input_parameter< mat >::type restrictions(restrictionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(GamLoopGLOO(beta_, Activeset, gamm, Y, Z, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigvalF_, eigvecF_, k1, restrictions));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -470,8 +471,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // GamLoopSGL
-List GamLoopSGL(NumericVector beta_, List Activeset, const NumericVector gamm, const double alpha, const mat& Y1, const mat& Z1, List jj, const List jjfull, const List jjcomp, const double eps, const colvec YMean2, const colvec ZMean2, const int k, const int pk, const List M1f_, const List M2f_, const NumericVector eigs_);
-RcppExport SEXP _BigVAR_GamLoopSGL(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP alphaSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M1f_SEXP, SEXP M2f_SEXP, SEXP eigs_SEXP) {
+List GamLoopSGL(NumericVector beta_, List Activeset, const NumericVector gamm, const double alpha, const mat& Y1, const mat& Z1, List jj, const List jjfull, const List jjcomp, const double eps, const colvec YMean2, const colvec ZMean2, const int k, const int pk, const List M1f_, const List M2f_, const NumericVector eigs_, mat restrictions);
+RcppExport SEXP _BigVAR_GamLoopSGL(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP alphaSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M1f_SEXP, SEXP M2f_SEXP, SEXP eigs_SEXP, SEXP restrictionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -492,13 +493,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const List >::type M1f_(M1f_SEXP);
     Rcpp::traits::input_parameter< const List >::type M2f_(M2f_SEXP);
     Rcpp::traits::input_parameter< const NumericVector >::type eigs_(eigs_SEXP);
-    rcpp_result_gen = Rcpp::wrap(GamLoopSGL(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M1f_, M2f_, eigs_));
+    Rcpp::traits::input_parameter< mat >::type restrictions(restrictionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(GamLoopSGL(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M1f_, M2f_, eigs_, restrictions));
     return rcpp_result_gen;
 END_RCPP
 }
 // GamLoopSGLDP
-List GamLoopSGLDP(NumericVector beta_, List Activeset, const mat gamm, const colvec alpha, const mat& Y1, const mat& Z1, List jj, const List jjfull, const List jjcomp, const double eps, const colvec YMean2, const colvec ZMean2, const int k, const int pk, const List M1f_, const List M2f_, const NumericVector eigs_);
-RcppExport SEXP _BigVAR_GamLoopSGLDP(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP alphaSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M1f_SEXP, SEXP M2f_SEXP, SEXP eigs_SEXP) {
+List GamLoopSGLDP(NumericVector beta_, List Activeset, const mat gamm, const colvec alpha, const mat& Y1, const mat& Z1, List jj, const List jjfull, const List jjcomp, const double eps, const colvec YMean2, const colvec ZMean2, const int k, const int pk, const List M1f_, const List M2f_, const NumericVector eigs_, mat restrictions);
+RcppExport SEXP _BigVAR_GamLoopSGLDP(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP alphaSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M1f_SEXP, SEXP M2f_SEXP, SEXP eigs_SEXP, SEXP restrictionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -519,7 +521,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const List >::type M1f_(M1f_SEXP);
     Rcpp::traits::input_parameter< const List >::type M2f_(M2f_SEXP);
     Rcpp::traits::input_parameter< const NumericVector >::type eigs_(eigs_SEXP);
-    rcpp_result_gen = Rcpp::wrap(GamLoopSGLDP(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M1f_, M2f_, eigs_));
+    Rcpp::traits::input_parameter< mat >::type restrictions(restrictionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(GamLoopSGLDP(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M1f_, M2f_, eigs_, restrictions));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -601,7 +604,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BigVAR_Eigencomp", (DL_FUNC) &_BigVAR_Eigencomp, 4},
     {"_BigVAR_EigencompOO", (DL_FUNC) &_BigVAR_EigencompOO, 4},
     {"_BigVAR_GamLoopGL2", (DL_FUNC) &_BigVAR_GamLoopGL2, 17},
-    {"_BigVAR_GamLoopGLOO", (DL_FUNC) &_BigVAR_GamLoopGLOO, 17},
+    {"_BigVAR_GamLoopGLOO", (DL_FUNC) &_BigVAR_GamLoopGLOO, 18},
     {"_BigVAR_GamLoopSGLOO", (DL_FUNC) &_BigVAR_GamLoopSGLOO, 17},
     {"_BigVAR_GamLoopSGLOODP", (DL_FUNC) &_BigVAR_GamLoopSGLOODP, 17},
     {"_BigVAR_Fistapar", (DL_FUNC) &_BigVAR_Fistapar, 9},
@@ -614,8 +617,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BigVAR_RelaxedLS", (DL_FUNC) &_BigVAR_RelaxedLS, 2},
     {"_BigVAR_GamLoopSGLX", (DL_FUNC) &_BigVAR_GamLoopSGLX, 17},
     {"_BigVAR_proxvx2", (DL_FUNC) &_BigVAR_proxvx2, 6},
-    {"_BigVAR_GamLoopSGL", (DL_FUNC) &_BigVAR_GamLoopSGL, 17},
-    {"_BigVAR_GamLoopSGLDP", (DL_FUNC) &_BigVAR_GamLoopSGLDP, 17},
+    {"_BigVAR_GamLoopSGL", (DL_FUNC) &_BigVAR_GamLoopSGL, 18},
+    {"_BigVAR_GamLoopSGLDP", (DL_FUNC) &_BigVAR_GamLoopSGLDP, 18},
     {"_BigVAR_GamLoopSGLXDP", (DL_FUNC) &_BigVAR_GamLoopSGLXDP, 17},
     {"_BigVAR_mcp_loop", (DL_FUNC) &_BigVAR_mcp_loop, 8},
     {"_BigVAR_gamloopMCP", (DL_FUNC) &_BigVAR_gamloopMCP, 10},
