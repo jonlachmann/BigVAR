@@ -536,7 +536,7 @@ fistaX <- function(Y, Z, beta, p, k1, lambda, eps, tk, m, s) {
 
 # Lag weighted lasso: VAR only
 
-.lassoVARTL <- function(B, Z, Y, lambda, eps, p, MN, alpha, C, YMean, ZMean) {
+.lassoVARTL <- function(B, Z, Y, lambda, eps, p, MN, alpha, C, YMean, ZMean, restrictions) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -559,7 +559,7 @@ fistaX <- function(Y, Z, beta, p, k1, lambda, eps, tk, m, s) {
       array(BFOO[, , (1 + (i - 1) * gran2):(i * length(lambda))],
         dim = c(k, k * p, length(lambda))
       ), Y, ZADJ, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), BFOO1,
-      k, p, tk, k, p
+      k, p, tk, k, p, restrictions
     )
 
 

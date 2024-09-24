@@ -145,7 +145,7 @@
   if (group == "Tapered") {
     beta <- .lassoVARTL(
       beta, trainZ, trainY, lambda, tol, p, MN, palpha, C, YMean,
-      ZMean
+      ZMean, restrictions
     )
   }
 
