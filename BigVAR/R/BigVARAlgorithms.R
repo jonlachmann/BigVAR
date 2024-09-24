@@ -351,12 +351,12 @@
 
 
 # Elementwise HLAG
-.HLAGElemAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, separate_lambdas = FALSE) {
+.HLAGElemAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   k <- ncol(Y)
 
   lambda <- as.matrix(lambda)
   betaini <- array(beta[, 2:dim(beta)[2], ], dim = c(k, k * p, nrow(lambda)))
-  betafin <- gamloopElem(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, separate_lambdas)
+  betafin <- gamloopElem(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, restrictions, separate_lambdas)
 
   if (MN) {
     betafin <- adjust_mn_var(betafin, C)
@@ -410,7 +410,7 @@
 
 
 # Componentwise HLAG
-.HLAGCAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, separate_lambdas = FALSE) {
+.HLAGCAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -422,7 +422,7 @@
   } else {
     betaini <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k, k * p, length(lambda)))
   }
-  betafin <- gamloopHLAG(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, separate_lambdas)
+  betafin <- gamloopHLAG(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, restrictions, separate_lambdas)
 
   if (MN) {
     betafin <- adjust_mn_var(betafin, C)
@@ -462,7 +462,7 @@
 }
 
 # HLAG Own/Other
-.HLAGOOAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, separate_lambdas = FALSE) {
+.HLAGOOAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   k <- ncol(Y)
 
   weights <- sqrt(c(rep(c(1, k - 1), length = 2 * p)))
@@ -474,7 +474,7 @@
   lambda <- as.matrix(lambda)
   betaini <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k, k * p, nrow(lambda)))
 
-  betafin <- gamloopOO(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, weights, groups, separate_lambdas)
+  betafin <- gamloopOO(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, weights, groups, restrictions, separate_lambdas)
 
   if (MN) {
     betafin <- adjust_mn_var(betafin, C)

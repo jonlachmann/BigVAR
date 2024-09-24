@@ -159,21 +159,21 @@
   if (group == "HLAGC") {
     beta <- .HLAGCAlg(
       beta, trainY, trainZ, lambda, tol, p, MN, C, YMean, ZMean,
-      separate_lambdas
+      restrictions, separate_lambdas
     )
   }
 
   if (group == "HLAGOO") {
     beta <- .HLAGOOAlg(
       beta, trainY, trainZ, lambda, tol, p, MN, C, YMean, ZMean,
-      separate_lambdas
+      restrictions, separate_lambdas
     )
   }
 
   if (group == "HLAGELEM") {
     beta <- .HLAGElemAlg(
       beta, trainY, trainZ, lambda, tol, p, MN, C, YMean, ZMean,
-      separate_lambdas
+      restrictions, separate_lambdas
     )
   }
 

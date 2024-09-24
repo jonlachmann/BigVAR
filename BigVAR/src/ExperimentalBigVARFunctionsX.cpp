@@ -1189,119 +1189,85 @@ List GamLoopSGLOODP(NumericVector beta_, const List Activeset_, mat gamm, const 
 // *
 
 //prox function 
-rowvec proxcpp(colvec v2,int L,double lambda,int k,colvec w)
-{
-
-	colvec r=v2;
-
-	for(int q=(L-1); q>=0;--q)
-
-		{	  
-	    
-			std::vector<unsigned int> ivec(L*k-(q)*k);
-			std::iota(ivec.begin(), ivec.end(), k*q);
-			uvec res = conv_to<uvec>::from(ivec);	
-
-			
-			if(norm(r(res)/(lambda*w(q)),"fro")<1+1e-8)
-				{
-					r(res)=zeros(res.n_elem);
-	
-				}
-			else{
-				r(res)=r(res)-lambda*w(q)*r(res)/norm(r(res),"fro");
-	  
-			}
-
-	
-	
-	    }
+rowvec proxcpp(colvec v2, int L, double lambda, int k, colvec w, rowvec restrictions) {
+	colvec r = v2;
+	for (int q = (L - 1); q >= 0; --q) {
+        std::vector<unsigned int> ivec(L * k - (q) * k);
+        std::iota(ivec.begin(), ivec.end(), k * q);
+        uvec res = conv_to<uvec>::from(ivec);
+        if (norm(r(res) / (lambda * w(q)), "fro") < 1 + 1e-8) {
+            r(res) = zeros(res.n_elem);
+        } else {
+            r(res) = (r(res) - lambda * w(q) * r(res) / norm(r(res), "fro")) % restrictions(res);
+        }
+    }
 	return(trans(r));
-
-
 }
+
 //Fista algorithm
 // [[Rcpp::export]]
-mat Fistapar(const mat Y,const mat Z,const mat phi, const int L,const rowvec lambda,const double eps,const double tk,const int k,bool sep_lambda=false)
-{
-	mat phiFIN=phi;
-
+mat Fistapar(const mat Y, const mat Z, const mat phi, const int L, const rowvec lambda, const double eps, const double tk, const int k, mat restrictions, bool sep_lambda = false) {
+	mat phiFIN = phi;
 	colvec w(L);
-	for(int r=0;r<L;++r)
+	for (int r = 0; r < L; ++r) {
+		w(r) = sqrt(static_cast<double>(k));
+	}
+	const colvec w2 = w;
+	rowvec phiR = phi.row(0);
+	rowvec v = phiR;
+	rowvec phiOLD = phiR;
+	rowvec phiOLDOLD = phiR;
 
-		{
-			w(r)=sqrt(static_cast<double>(k));
+	for (int i = 0; i < k; ++i) {
+        phiR = phi.row(i);
+        rowvec restrict = restrictions.row(i);
+        phiOLD = zeros(1, k * L);
+        phiOLDOLD = phiOLD;
+        double thresh = 10 * eps;
+        double j = 1;
+        double templambda;
+        if (sep_lambda) {
+            templambda = lambda(i);
+        } else {
+            templambda = lambda(0);
+        }
+        while (thresh > eps) {
+            // Nesterov step
+            v = phiOLD + ((j - 2) / (j + 1)) * (phiOLD - phiOLDOLD);
+            phiR = proxcpp(vectorise(v) + tk * vectorise((trans(Y.col(i)) - v * Z) * trans(Z)), L, tk * templambda, k, w2, restrict);
+            thresh = max(abs(phiR - v));
 
-		}
-	const colvec w2=w;
-	rowvec phiR=phi.row(0);
-	rowvec v=phiR;
-	rowvec phiOLD=phiR;
-	rowvec phiOLDOLD=phiR;
-
-	int i;
-	for( i=0;i<k;++i)
-		{
-			phiR=phi.row(i);
-			phiOLD=zeros(1,k*L);
-			phiOLDOLD=phiOLD;
-			double thresh=10*eps;
-			double   j=1;
-			double templambda;
-			if(sep_lambda){
-				templambda=lambda(i);
-
-			}else{
-				templambda=lambda(0);
-			}
-
-			while(thresh>eps)
-				{
-					// Nesterov step
-					v=phiOLD+((j-2)/(j+1))*(phiOLD-phiOLDOLD);
-					phiR=proxcpp(vectorise(v)+tk*vectorise((trans(Y.col(i))-v*Z)*trans(Z)),L,tk*templambda,k,w2);
-					thresh=max(abs(phiR-v));
-
-					phiOLDOLD=phiOLD;
-					phiOLD=phiR;
-					j+=1;
-				}
-			phiFIN.row(i)=phiR;
-
-		} 
-
+            phiOLDOLD = phiOLD;
+            phiOLD = phiR;
+            j += 1;
+        }
+        phiFIN.row(i) = phiR;
+    }
 	return(phiFIN);
 }
 
 // [[Rcpp::export]]
-cube gamloopHLAG(NumericVector beta_, const mat& Y,const mat& Z, mat gammgrid, const double eps,const colvec& YMean2, const colvec& ZMean2,mat& B1, const int k, const int p,bool sep_lambda=false){
-
+cube gamloopHLAG(NumericVector beta_, const mat& Y, const mat& Z, mat gammgrid, const double eps, const colvec& YMean2, const colvec& ZMean2, mat& B1, const int k, const int p, mat restrictions, bool sep_lambda = false) {
 	vec eigval;
 	mat eigvec;
-	const mat& Zt=Z*trans(Z);
+	const mat& Zt = Z * trans(Z);
 	eig_sym(eigval, eigvec, Zt);
 
-	double tk=1/max(eigval); 
-	IntegerVector dims=beta_.attr("dim");
+	double tk = 1 / max(eigval);
+	IntegerVector dims = beta_.attr("dim");
 
-	const int ngridpts=dims[2];
-	cube bcube(beta_.begin(),dims[0],dims[1],ngridpts,false);
-	cube bcube2(dims[0],dims[1]+1,ngridpts);
+	const int ngridpts = dims[2];
+	cube bcube(beta_.begin(), dims[0], dims[1], ngridpts, false);
+	cube bcube2(dims[0], dims[1] + 1, ngridpts);
 	bcube2.fill(0);
-	colvec nu=zeros<colvec>(dims[0]);
-
-	int i;
-
-	for (i=0; i<ngridpts;++i) {
-            
-		rowvec gamm=gammgrid.row(i);
-		B1=bcube.slice(i);
-		B1 = Fistapar(Y,Z,B1,p,gamm,eps,tk,k); 
-	  
-		nu = YMean2 - B1 *ZMean2;
+	colvec nu = zeros<colvec>(dims[0]);
+	for (int i = 0; i < ngridpts; ++i) {
+		rowvec gamm = gammgrid.row(i);
+		B1 = bcube.slice(i);
+		B1 = Fistapar(Y, Z, B1, p, gamm, eps, tk, k, restrictions);
+		nu = YMean2 - B1 * ZMean2;
 		bcube2.slice(i) = mat(join_horiz(nu, B1)); 
 	}
-
     return(bcube2);
 }
 
@@ -1314,110 +1280,79 @@ cube gamloopHLAG(NumericVector beta_, const mat& Y,const mat& Z, mat gammgrid, c
 // *
 
 
-rowvec proxcppOO(colvec v2,int L,double lambda,List vsubs,int k,colvec w)
-{
-
-	colvec r=v2;
-	for(int i=(L-1); i>=0;--i)
-
-		{
-
-			uvec res=as<uvec>(vsubs(i));
-
-			if(norm(r(res)/(lambda*w(i)),"fro")<1+1e-8)
-				{
-					r(res)=zeros(res.n_elem);
-				}
-			else{
-				r(res)=r(res)-lambda*w(i)*r(res)/(norm(r(res),"fro"));
-			}
-
-		}
-  
-
+rowvec proxcppOO(colvec v2, int L, double lambda, List vsubs, int k, colvec w, rowvec restrictions) {
+	colvec r = v2;
+	for (int i = (L - 1); i >= 0; --i) {
+        uvec res = as<uvec>(vsubs(i));
+        if (norm(r(res) / (lambda * w(i)), "fro") < 1 + 1e-8) {
+            r(res) = zeros(res.n_elem);
+        } else {
+            r(res) = (r(res) - lambda * w(i) * r(res) / (norm(r(res), "fro"))) % restrictions(res);
+        }
+    }
 	return(trans(r));
 }
 
-mat FistaOO(const mat Y, const mat Z, mat phi, const int p, const int k, const rowvec lambda, List groups_, const double eps, const double tk,colvec w,bool sep_lambda)
-{
+mat FistaOO(const mat Y, const mat Z, mat phi, const int p, const int k, const rowvec lambda, List groups_, const double eps, const double tk, colvec w, mat restrictions, bool sep_lambda) {
+	double j = 1;
+	mat phiFin = phi;
+	rowvec phiR = phi.row(0);
+	rowvec phiOLD = phiR;
+	rowvec phiOLDOLD = phiOLD;
+	rowvec v = phiOLD;
+	uvec res1 = ind(p, 0);
 
-	double j=1;
-	mat phiFin=phi;
-	rowvec phiR=phi.row(0); 
-	rowvec phiOLD=phiR;
-	rowvec phiOLDOLD=phiOLD;
-	rowvec v=phiOLD;
-	uvec res1=ind(p,0);
-
-	double thresh=10;
-	for(int i=0;i<k;++i)
-		{
-			j=1;
-			thresh=10*eps;
-			phiR=phi.row(i);
-			phiOLD=phiR;
-			phiOLDOLD=phiOLD;
-			double templambda;
-			if(sep_lambda){
-				templambda=lambda(i);
-
-			}else{
-				templambda=lambda(0);
-			}
-
-			v=phiR;
-			List vsubs=groups_[i];
-			while(thresh>eps)
-				{
-					v=phiOLD+((j-2)/(j+1))*(phiOLD-phiOLDOLD);
-
-					phiR=proxcppOO(vectorise(v)+tk*vectorise((trans(Y.col(i))-v*Z)*trans(Z)),2*p,tk*templambda,vsubs,k,w);
-       
-					thresh=max(abs(phiR-v));
-					phiOLDOLD=phiOLD;
-					phiOLD=phiR;
-					j+=1;
-				}
-			phiFin.row(i)=phiR;
-		}
+	double thresh = 10;
+	for (int i = 0; i < k; ++i) {
+        j = 1;
+        thresh = 10 * eps;
+        phiR = phi.row(i);
+        rowvec restrict = restrictions.row(i);
+        phiOLD = phiR;
+        phiOLDOLD = phiOLD;
+        double templambda;
+        if (sep_lambda) {
+            templambda = lambda(i);
+        } else {
+            templambda = lambda(0);
+        }
+        v = phiR;
+        List vsubs = groups_[i];
+        while (thresh > eps) {
+            v = phiOLD + ((j - 2) / (j + 1)) * (phiOLD - phiOLDOLD);
+            phiR = proxcppOO(vectorise(v) + tk * vectorise((trans(Y.col(i)) - v * Z) * trans(Z)), 2 * p, tk * templambda, vsubs, k, w, restrict);
+            thresh = max(abs(phiR - v));
+            phiOLDOLD = phiOLD;
+            phiOLD = phiR;
+            j += 1;
+        }
+        phiFin.row(i) = phiR;
+    }
 	return(phiFin);
-
 }
 
 // [[Rcpp::export]]
-cube gamloopOO(NumericVector beta_, const mat Y,const mat Z, mat gammgrid, const double eps,const colvec YMean2, const colvec ZMean2,mat B1, const int k, const int p,colvec w, List groups_,bool sep_lambda=false){
-
-	mat B1F2=B1;
-
+cube gamloopOO(NumericVector beta_, const mat Y, const mat Z, mat gammgrid, const double eps, const colvec YMean2, const colvec ZMean2, mat B1, const int k, const int p, colvec w, List groups_, mat restrictions, bool sep_lambda = false) {
+    mat B1F2 = B1;
 	vec eigval;
 	mat eigvec;
-	const mat Zt=Z*trans(Z);
+	const mat Zt = Z * trans(Z);
 	eig_sym(eigval, eigvec, Zt);
 
-	double tk=1/max(eigval); 
-
-	IntegerVector dims=beta_.attr("dim");
-
-
-	const int ngridpts=dims[2];
-	cube bcube(beta_.begin(),dims[0],dims[1],ngridpts,false);
-	cube bcube2(dims[0],dims[1]+1,ngridpts);
+	double tk = 1 / max(eigval);
+    IntegerVector dims = beta_.attr("dim");
+    const int ngridpts = dims[2];
+	cube bcube(beta_.begin(), dims[0], dims[1], ngridpts, false);
+	cube bcube2(dims[0], dims[1] + 1, ngridpts);
 	bcube2.fill(0);
-	colvec nu=zeros<colvec>(k);
-
-	int i;
-
-	for (i=0; i<ngridpts;++i) {
-            
-
-		rowvec gamm=gammgrid.row(i);
-		B1F2=bcube.slice(i);
-		B1 = FistaOO(Y,Z,B1F2,p,k,gamm,groups_,eps,tk,w,sep_lambda); 
-	  
-		nu = YMean2 - B1 *ZMean2;
+	colvec nu = zeros<colvec>(k);
+	for (int i = 0; i < ngridpts; ++i) {
+        rowvec gamm = gammgrid.row(i);
+		B1F2 = bcube.slice(i);
+		B1 = FistaOO(Y, Z, B1F2, p, k, gamm, groups_, eps, tk, w, restrictions, sep_lambda);
+		nu = YMean2 - B1 * ZMean2;
 		bcube2.slice(i) = mat(join_horiz(nu, B1)); 
 	}
-
     return(bcube2);
 }
 
@@ -1427,162 +1362,111 @@ cube gamloopOO(NumericVector beta_, const mat Y,const mat Z, mat gammgrid, const
 // *
 // *
 
-uvec vsubscppelem(int p,int pmax)
-{
-	uvec vs(pmax-p+1);
-	for(int i=pmax;i>=p;--i)
-		{
-			vs(i-p)=i-1;
-		}
+uvec vsubscppelem(int p, int pmax) {
+	uvec vs(pmax - p + 1);
+	for(int i = pmax; i >= p; --i) {
+        vs(i - p) = i - 1;
+    }
 	return(vs);
 }
 
-uvec bbsubs(int j,int k,int p)
-{
+uvec bbsubs(int j, int k, int p) {
 	uvec bb(p);
-	bb(0)=j;
-	for(int i=1;i<p;++i)
-		{
-			bb(i)=j+k*(i);
-
-		}
+	bb(0) = j;
+	for (int i = 1; i < p; ++i) {
+        bb(i) = j + k * (i);
+    }
 	return(bb);
-
 }
 
 
-rowvec proxcppelem(colvec v2,int L,double lambda,uvec res1,colvec w)
-{
-	colvec r =v2;
-	for(int i=(L-1); i>=0;--i)
-
-		{
-           
-	  
-			uvec res=vsubscppelem(i+1,L);
-	  
-
-
-			if(norm(r(res)/(lambda*w(i)),"fro")<1+1e-8)
-				{
-					r(res)=zeros(res.n_elem);
-				}
-			else{
-				r(res)=r(res)-lambda*w(i)*r(res)/(norm(r(res),"fro"));
-			}
-
-		}
-  
-
+rowvec proxcppelem(colvec v2, int L, double lambda, uvec res1, colvec w) {
+	colvec r = v2;
+	for (int i = (L - 1); i >= 0; --i) {
+        uvec res = vsubscppelem(i + 1, L);
+        if (norm(r(res) / (lambda * w(i)), "fro") < 1 + 1e-8) {
+            r(res) = zeros(res.n_elem);
+        } else {
+            r(res) = r(res) - lambda * w(i) * r(res) / (norm(r(res), "fro"));
+        }
+    }
 	return(trans(r));
-
-
 }
 
 
-rowvec prox2(colvec v,double lambda, int k,int p,uvec res1,colvec w)
-{
+rowvec prox2(colvec v, double lambda, int k, int p, uvec res1, colvec w, rowvec restrict) {
 	rowvec v2(v.n_elem);
 	rowvec v3(p);
-	for(int i=0;i<k;++i)
-		{
-			uvec bb=bbsubs(i,k,p);
-			colvec v1=v(bb);
-			v3=proxcppelem(v1,p,lambda,res1,w);
-			v2(bb)=v3;
-		}
+	for (int i = 0; i < k; ++i) {
+        uvec bb = bbsubs(i, k, p);
+        colvec v1 = v(bb);
+        v3 = proxcppelem(v1, p, lambda, res1, w);
+        v2(bb) = v3 % restrict;
+    }
 	return(v2);
 }
 
 
 // [[Rcpp::export]]
-mat FistaElem(const mat& Y,const mat& Z, mat phi, const int p,const int k,rowvec lambda, const double eps,const double tk,bool sep_lambda=false)
-{
-	double j=1;
-	mat phiFin=phi;
-	rowvec phiR=phi.row(0); 
-	rowvec phiOLD=phiR;
-	rowvec phiOLDOLD=phiOLD;
-	rowvec v=phiOLD;
-	uvec res1=ind(p,0);
+mat FistaElem(const mat& Y, const mat& Z, mat phi, const int p, const int k, rowvec lambda, const double eps, const double tk, mat restrictions, bool sep_lambda = false) {
+	double j = 1;
+	mat phiFin = phi;
+	rowvec phiR = phi.row(0);
+	rowvec phiOLD = phiR;
+	rowvec phiOLDOLD = phiOLD;
+	rowvec v = phiOLD;
+	uvec res1 = ind(p, 0);
 	colvec w(p);
 	w.ones();
-
-
-	for(int i=0;i<k;++i)
-		{
-			j=1;
-			double thresh=10*eps;
-			phiR=phi.row(i);
-			phiOLD=phiR;
-			phiOLDOLD=phiOLD;
-			v=phiR;
-			double templambda;
-			if(sep_lambda){
-				templambda=lambda(i);
-
-			}else{
-				templambda=lambda(0);
-			}
-
-			while(thresh>eps)
-				{
-					v=phiOLD+((j-2)/(j+1))*(phiOLD-phiOLDOLD);
-
-					phiR=prox2(vectorise(v)+tk*vectorise((trans(Y.col(i))-v*Z)*trans(Z)),tk*templambda,k,p,res1,w);
-       
-					thresh=max(abs(phiR-v));
-					phiOLDOLD=phiOLD;
-					phiOLD=phiR;
-					j+=1;
-	  
-				}
-			phiFin.row(i)=phiR;
-		}
+    for (int i = 0; i < k; ++i) {
+        j = 1;
+        double thresh = 10 * eps;
+        phiR = phi.row(i);
+        rowvec restrict = restrictions.row(i);
+        phiOLD = phiR;
+        phiOLDOLD = phiOLD;
+        v = phiR;
+        double templambda;
+        if (sep_lambda) {
+            templambda=lambda(i);
+        } else {
+            templambda=lambda(0);
+        }
+        while (thresh > eps) {
+            v = phiOLD + ((j - 2) / (j + 1)) * (phiOLD - phiOLDOLD);
+            phiR = prox2(vectorise(v) + tk * vectorise((trans(Y.col(i)) - v * Z) * trans(Z)), tk * templambda, k, p, res1, w, restrict);
+            thresh = max(abs(phiR - v));
+            phiOLDOLD = phiOLD;
+            phiOLD = phiR;
+            j += 1;
+        }
+        phiFin.row(i) = phiR;
+    }
 	return(phiFin);
-
-
-
-
-
 }
 
 // Lamba loop
 // [[Rcpp::export]]
-cube gamloopElem(NumericVector beta_, const mat& Y,const mat& Z, mat gammgrid, const double eps,const colvec YMean2, const colvec ZMean2,mat B1, const int k, const int p,bool sep_lambda=false){
-
-	mat B1F2=B1;
-
+cube gamloopElem(NumericVector beta_, const mat& Y, const mat& Z, mat gammgrid, const double eps, const colvec YMean2, const colvec ZMean2, mat B1, const int k, const int p, mat restrictions, bool sep_lambda = false) {
+    mat B1F2 = B1;
 	vec eigval;
 	mat eigvec;
-	const mat Zt=Z*trans(Z);
+	const mat Zt = Z * trans(Z);
 	eig_sym(eigval, eigvec, Zt);
-
-	double tk=1/max(eigval); 
-
-
-	IntegerVector dims=beta_.attr("dim");
-
-
-	const int ngridpts=dims[2];
-	cube bcube(beta_.begin(),dims[0],dims[1],ngridpts,false);
-	cube bcube2(dims[0],dims[1]+1,ngridpts);
+	double tk = 1 / max(eigval);
+    IntegerVector dims = beta_.attr("dim");
+    const int ngridpts = dims[2];
+	cube bcube(beta_.begin(), dims[0], dims[1], ngridpts, false);
+	cube bcube2(dims[0], dims[1] + 1, ngridpts);
 	bcube2.fill(0);
-	colvec nu=zeros<colvec>(k);
-
-	int i;
-
-	for (i=0; i<ngridpts;++i) {
-            
-		rowvec gamm=gammgrid.row(i);
-
-		B1F2=bcube.slice(i);
-		B1 = FistaElem(Y,Z,B1F2,p,k,gamm,eps,tk,sep_lambda); 
-	  
-		nu = YMean2 - B1 *ZMean2;
+	colvec nu = zeros<colvec>(k);
+	for (int i = 0; i < ngridpts; ++i) {
+		rowvec gamm = gammgrid.row(i);
+		B1F2 = bcube.slice(i);
+		B1 = FistaElem(Y, Z, B1F2, p, k, gamm, eps, tk, restrictions, sep_lambda);
+		nu = YMean2 - B1 * ZMean2;
 		bcube2.slice(i) = mat(join_horiz(nu, B1)); 
 	}
-
     return(bcube2);
 }
 

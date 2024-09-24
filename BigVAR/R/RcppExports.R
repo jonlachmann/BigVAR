@@ -57,16 +57,16 @@ GamLoopSGLOODP <- function(beta_, Activeset_, gamm, alpha, Y, Z, jj_, jjfull_, j
     .Call('_BigVAR_GamLoopSGLOODP', PACKAGE = 'BigVAR', beta_, Activeset_, gamm, alpha, Y, Z, jj_, jjfull_, jjcomp_, eps, YMean2, ZMean2, k1, pk, M2f_, eigs_, m, restrictions)
 }
 
-Fistapar <- function(Y, Z, phi, L, lambda, eps, tk, k, sep_lambda = FALSE) {
-    .Call('_BigVAR_Fistapar', PACKAGE = 'BigVAR', Y, Z, phi, L, lambda, eps, tk, k, sep_lambda)
+Fistapar <- function(Y, Z, phi, L, lambda, eps, tk, k, restrictions, sep_lambda = FALSE) {
+    .Call('_BigVAR_Fistapar', PACKAGE = 'BigVAR', Y, Z, phi, L, lambda, eps, tk, k, restrictions, sep_lambda)
 }
 
-gamloopHLAG <- function(beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, sep_lambda = FALSE) {
-    .Call('_BigVAR_gamloopHLAG', PACKAGE = 'BigVAR', beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, sep_lambda)
+gamloopHLAG <- function(beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, restrictions, sep_lambda = FALSE) {
+    .Call('_BigVAR_gamloopHLAG', PACKAGE = 'BigVAR', beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, restrictions, sep_lambda)
 }
 
-gamloopOO <- function(beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, w, groups_, sep_lambda = FALSE) {
-    .Call('_BigVAR_gamloopOO', PACKAGE = 'BigVAR', beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, w, groups_, sep_lambda)
+gamloopOO <- function(beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, w, groups_, restrictions, sep_lambda = FALSE) {
+    .Call('_BigVAR_gamloopOO', PACKAGE = 'BigVAR', beta_, Y, Z, gammgrid, eps, YMean2, ZMean2, B1, k, p, w, groups_, restrictions, sep_lambda)
 }
 
 FistaElem <- function(Y, Z, phi, p, k, lambda, eps, tk, sep_lambda = FALSE) {
