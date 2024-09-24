@@ -1401,7 +1401,7 @@ rowvec prox2(colvec v, double lambda, int k, int p, uvec res1, colvec w, rowvec 
         uvec bb = bbsubs(i, k, p);
         colvec v1 = v(bb);
         v3 = proxcppelem(v1, p, lambda, res1, w);
-        v2(bb) = v3 % restrict;
+        v2(bb) = v3 % trans(restrict(bb));
     }
 	return(v2);
 }
@@ -1428,9 +1428,9 @@ mat FistaElem(const mat& Y, const mat& Z, mat phi, const int p, const int k, row
         v = phiR;
         double templambda;
         if (sep_lambda) {
-            templambda=lambda(i);
+            templambda = lambda(i);
         } else {
-            templambda=lambda(0);
+            templambda = lambda(0);
         }
         while (thresh > eps) {
             v = phiOLD + ((j - 2) / (j + 1)) * (phiOLD - phiOLDOLD);
