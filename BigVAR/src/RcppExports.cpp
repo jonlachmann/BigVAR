@@ -435,8 +435,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // GamLoopSGLX
-List GamLoopSGLX(NumericVector beta_, List Activeset, NumericVector gamm, double alpha, const mat& Y1, const mat& Z1, List jj, List jjfull, List jjcomp, double eps, colvec YMean2, colvec ZMean2, int k, int pk, List M2f_, NumericVector eigs, int k1);
-RcppExport SEXP _BigVAR_GamLoopSGLX(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP alphaSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M2f_SEXP, SEXP eigsSEXP, SEXP k1SEXP) {
+List GamLoopSGLX(NumericVector beta_, List Activeset, NumericVector gamm, double alpha, const mat& Y1, const mat& Z1, List jj, List jjfull, List jjcomp, double eps, colvec YMean2, colvec ZMean2, int k, int pk, List M2f_, NumericVector eigs, int k1, mat restrictions);
+RcppExport SEXP _BigVAR_GamLoopSGLX(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP alphaSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M2f_SEXP, SEXP eigsSEXP, SEXP k1SEXP, SEXP restrictionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -457,7 +457,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type M2f_(M2f_SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type eigs(eigsSEXP);
     Rcpp::traits::input_parameter< int >::type k1(k1SEXP);
-    rcpp_result_gen = Rcpp::wrap(GamLoopSGLX(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1));
+    Rcpp::traits::input_parameter< mat >::type restrictions(restrictionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(GamLoopSGLX(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1, restrictions));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -534,8 +535,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // GamLoopSGLXDP
-List GamLoopSGLXDP(NumericVector beta_, List Activeset, mat gamm, colvec alpha, const mat& Y1, const mat& Z1, List jj, List jjfull, List jjcomp, double eps, colvec YMean2, colvec ZMean2, int k, int pk, List M2f_, NumericVector eigs, int k1);
-RcppExport SEXP _BigVAR_GamLoopSGLXDP(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP alphaSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M2f_SEXP, SEXP eigsSEXP, SEXP k1SEXP) {
+List GamLoopSGLXDP(NumericVector beta_, List Activeset, mat gamm, colvec alpha, const mat& Y1, const mat& Z1, List jj, List jjfull, List jjcomp, double eps, colvec YMean2, colvec ZMean2, int k, int pk, List M2f_, NumericVector eigs, int k1, mat restrictions);
+RcppExport SEXP _BigVAR_GamLoopSGLXDP(SEXP beta_SEXP, SEXP ActivesetSEXP, SEXP gammSEXP, SEXP alphaSEXP, SEXP Y1SEXP, SEXP Z1SEXP, SEXP jjSEXP, SEXP jjfullSEXP, SEXP jjcompSEXP, SEXP epsSEXP, SEXP YMean2SEXP, SEXP ZMean2SEXP, SEXP kSEXP, SEXP pkSEXP, SEXP M2f_SEXP, SEXP eigsSEXP, SEXP k1SEXP, SEXP restrictionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -556,7 +557,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type M2f_(M2f_SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type eigs(eigsSEXP);
     Rcpp::traits::input_parameter< int >::type k1(k1SEXP);
-    rcpp_result_gen = Rcpp::wrap(GamLoopSGLXDP(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1));
+    Rcpp::traits::input_parameter< mat >::type restrictions(restrictionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(GamLoopSGLXDP(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1, restrictions));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -622,11 +624,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BigVAR_powermethod", (DL_FUNC) &_BigVAR_powermethod, 2},
     {"_BigVAR_norm2", (DL_FUNC) &_BigVAR_norm2, 1},
     {"_BigVAR_RelaxedLS", (DL_FUNC) &_BigVAR_RelaxedLS, 2},
-    {"_BigVAR_GamLoopSGLX", (DL_FUNC) &_BigVAR_GamLoopSGLX, 17},
+    {"_BigVAR_GamLoopSGLX", (DL_FUNC) &_BigVAR_GamLoopSGLX, 18},
     {"_BigVAR_proxvx2", (DL_FUNC) &_BigVAR_proxvx2, 6},
     {"_BigVAR_GamLoopSGL", (DL_FUNC) &_BigVAR_GamLoopSGL, 18},
     {"_BigVAR_GamLoopSGLDP", (DL_FUNC) &_BigVAR_GamLoopSGLDP, 18},
-    {"_BigVAR_GamLoopSGLXDP", (DL_FUNC) &_BigVAR_GamLoopSGLXDP, 17},
+    {"_BigVAR_GamLoopSGLXDP", (DL_FUNC) &_BigVAR_GamLoopSGLXDP, 18},
     {"_BigVAR_mcp_loop", (DL_FUNC) &_BigVAR_mcp_loop, 8},
     {"_BigVAR_gamloopMCP", (DL_FUNC) &_BigVAR_gamloopMCP, 10},
     {NULL, NULL, 0}

@@ -70,13 +70,13 @@
         GG <- .SparseGroupLassoVARX(beta, groups, compgroups, trainY, trainZ,
           lambda, alpha,
           INIactive = activeset, tol, starting_eigvals, p, MN,
-          k, s + s1, k1, C, YMean, ZMean
+          k, s + s1, k1, C, YMean, ZMean, restrictions
         )
       } else {
         GG <- .SparseGroupLassoVARXDual(beta, groups, compgroups, trainY,
           trainZ, lambda, alpha,
           INIactive = activeset, tol, starting_eigvals,
-          p, MN, k, s + s1, k1, C, YMean, ZMean
+          p, MN, k, s + s1, k1, C, YMean, ZMean, restrictions
         )
       }
     } else {

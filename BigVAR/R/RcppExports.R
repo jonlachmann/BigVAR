@@ -89,8 +89,8 @@ RelaxedLS <- function(K, B2) {
     .Call('_BigVAR_RelaxedLS', PACKAGE = 'BigVAR', K, B2)
 }
 
-GamLoopSGLX <- function(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1) {
-    .Call('_BigVAR_GamLoopSGLX', PACKAGE = 'BigVAR', beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1)
+GamLoopSGLX <- function(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1, restrictions) {
+    .Call('_BigVAR_GamLoopSGLX', PACKAGE = 'BigVAR', beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1, restrictions)
 }
 
 proxvx2 <- function(v2, L, lambda, m, k, F1) {
@@ -105,8 +105,8 @@ GamLoopSGLDP <- function(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjco
     .Call('_BigVAR_GamLoopSGLDP', PACKAGE = 'BigVAR', beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M1f_, M2f_, eigs_, restrictions)
 }
 
-GamLoopSGLXDP <- function(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1) {
-    .Call('_BigVAR_GamLoopSGLXDP', PACKAGE = 'BigVAR', beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1)
+GamLoopSGLXDP <- function(beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1, restrictions) {
+    .Call('_BigVAR_GamLoopSGLXDP', PACKAGE = 'BigVAR', beta_, Activeset, gamm, alpha, Y1, Z1, jj, jjfull, jjcomp, eps, YMean2, ZMean2, k, pk, M2f_, eigs, k1, restrictions)
 }
 
 mcp_loop <- function(Y, Z, B, lambda, tol, gamma, restrictions, mcp = TRUE) {

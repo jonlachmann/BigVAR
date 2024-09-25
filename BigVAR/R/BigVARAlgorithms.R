@@ -224,7 +224,7 @@
 
 # Sparse Lag VARX-L
 .SparseGroupLassoVARX <- function(beta, groups, compgroups, Y, Z, lambda, alpha, INIactive, eps, starting_eigvals, p, MN,
-                                  k, s, k1, C, YMean, ZMean) {
+                                  k, s, k1, C, YMean, ZMean, restrictions) {
   m <- k - k1
   Y <- t(Y)
   M2f <- list()
@@ -250,7 +250,7 @@
 
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, (k1) * p + (s * m), length(lambda)))
   BB <- GamLoopSGLX(beta, INIactive, lambda, alpha, Y, Z, groups, groups_full, compgroups, eps, YMean, ZMean, k1, (k1) *
-    p + (s * m), M2f, eigs, k1)
+    p + (s * m), M2f, eigs, k1, restrictions)
 
   BB$q1 <- q1
 
@@ -264,7 +264,7 @@
 
 
 .SparseGroupLassoVARXDual <- function(beta, groups, compgroups, Y, Z, lambda, alpha, INIactive, eps, starting_eigvals, p,
-                                      MN, k, s, k1, C, YMean, ZMean) {
+                                      MN, k, s, k1, C, YMean, ZMean, restrictions) {
   m <- k - k1
   Y <- t(Y)
   M2f <- list()
@@ -289,7 +289,7 @@
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, (k1) * p + (s * m), nrow(lambda) * length(alpha)))
 
   BB <- GamLoopSGLXDP(beta, INIactive, lambda, alpha, Y, Z, groups, groups, compgroups, eps, YMean, ZMean, k1, (k1) * p +
-    (s * m), M2f, eigs, k1)
+    (s * m), M2f, eigs, k1, restrictions)
 
   BB$q1 <- q1
 
