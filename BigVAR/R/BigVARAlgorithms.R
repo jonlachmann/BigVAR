@@ -1,4 +1,4 @@
-.MCPFit <- function(B, Z, Y, lambda, eps, MN, C, group, gamma = 3, YMean, ZMean) {
+.MCPFit <- function(B, Z, Y, lambda, eps, MN, C, group, gamma = 3, YMean, ZMean, restrictions) {
   nc <- apply(B, 3, ncol)[1]
   BINI <- B[, 2:nc, , drop = F]
   if (group == "MCP") {
@@ -7,7 +7,7 @@
     mcp <- FALSE
   }
 
-  beta <- gamloopMCP(BINI, Y, Z, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), gamma = gamma, mcp)
+  beta <- gamloopMCP(BINI, Y, Z, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), gamma = gamma, restrictions, mcp)
 
   if (MN) {
     beta <- adjust_mn_var(beta, C)
@@ -19,7 +19,7 @@
 
 # Sparse Own/Other (VAR)
 .SparseGroupLassoVAROO <- function(beta, Y, Z, lambda, alpha, INIactive, eps, q1a, p, MN, dual = FALSE,
-                                   C, YMean, ZMean) {
+                                   C, YMean, ZMean, restrictions) {
   k <- ncol(Y)
   Y <- t(Y)
   m <- 0
@@ -44,12 +44,12 @@
   if (!dual) {
     BB <- GamLoopSGLOO(
       beta, INIactive, lambda, alpha, Y, ZZ, jj, jj, jjcomp, eps, YMean, ZMean, k, p * k, M2f, eigs,
-      m
+      m, restrictions
     )
   } else {
     BB <- GamLoopSGLOODP(
       beta, INIactive, lambda, alpha, Y, ZZ, jj, jj, jjcomp, eps, YMean, ZMean, k, p * k, M2f, eigs,
-      m
+      m, restrictions
     )
   }
 
@@ -64,7 +64,7 @@
 
 
 # Sparse Lag (VAR)
-.SparseGroupLassoVAR <- function(beta, Y, Z, lambda, alpha, INIactive, eps, q1a, p, MN, C, YMean, ZMean) {
+.SparseGroupLassoVAR <- function(beta, Y, Z, lambda, alpha, INIactive, eps, q1a, p, MN, C, YMean, ZMean, restrictions) {
   k <- ncol(Y)
 
   Y <- t(Y)
@@ -90,7 +90,7 @@
   beta <- array(beta[, 2:dim(beta)[2], ], dim = c(dims[1], dims[2] - 1, dims[3]))
   BB <- GamLoopSGL(
     beta, INIactive, lambda, alpha, Y, Z, jj, jjfull, jjcomp, eps, YMean, as.matrix(ZMean), k, p * k, M1f,
-    M2f, eigs
+    M2f, eigs, restrictions
   )
   BB$q1 <- q1
 
@@ -103,7 +103,7 @@
 
 # Sparse Lag (VAR) Dual Search
 .SparseGroupLassoVARDual <- function(beta, Y, Z, lambda, alpha, INIactive, eps, q1a, p, MN, C, YMean,
-                                     ZMean) {
+                                     ZMean, restrictions) {
   k <- ncol(Y)
   Y <- t(Y)
   M1f <- list()
@@ -125,7 +125,7 @@
   jjcomp <- .groupfuncomp(p, k)
   dims <- dim(beta)
   beta <- array(beta[, 2:dim(beta)[2], ], dim = c(dims[1], dims[2] - 1, dims[3]))
-  BB <- GamLoopSGLDP(beta, INIactive, lambda, alpha, Y, Z, jj, jjfull, jjcomp, eps, YMean, ZMean, k, p * k, M1f, M2f, eigs)
+  BB <- GamLoopSGLDP(beta, INIactive, lambda, alpha, Y, Z, jj, jjfull, jjcomp, eps, YMean, ZMean, k, p * k, M1f, M2f, eigs, restrictions)
   BB$q1 <- q1
 
   if (MN) {
@@ -137,7 +137,7 @@
 
 
 # Lag Group (VAR/VARX-L)
-.GroupLassoVAR1 <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, k, k1, s, C, YMean, ZMean) {
+.GroupLassoVAR1 <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, k, k1, s, C, YMean, ZMean, restrictions) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -154,7 +154,7 @@
   beta <- beta[, 2:dim(beta)[2], , drop = F]
   BB <- GamLoopGL2(
     beta, INIactive, lambda, Y, Z, groups, fullgroups, compgroups, eps, YMean, ZMean, k1, p * k1 + m * s,
-    M2, eigvals, eigvecs
+    M2, eigvals, eigvecs, restrictions
   )
 
   if (MN) {
@@ -166,7 +166,7 @@
 
 # Do I really need a separate function for X vs not?  my guess is no.... should be the case for all of these Group
 # Lasso Own/Other (VARXL)
-.GroupLassoOOX <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, k, k1, s, C, YMean, ZMean) {
+.GroupLassoOOX <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, k, k1, s, C, YMean, ZMean, restrictions) {
   m <- k - k1
   Y <- t(Y)
   ZZ <- kronecker(t(Z), diag(k1))
@@ -181,7 +181,7 @@
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, (k1) * p + m * s, length(lambda)))
 
   BB <- GamLoopGLOO(beta, INIactive, lambda, Y, ZZ, groups, groups_full, compgroups, eps, YMean, ZMean, k1, p * (k1) +
-    m * s, M2, eigvals, eigvecs, k1)
+    m * s, M2, eigvals, eigvecs, k1, restrictions)
 
   if (MN) {
     BB$beta <- adjust_mn_var(BB$beta, C)
@@ -192,7 +192,7 @@
 
 
 # Own/Other Group VAR-L
-.GroupLassoOO <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, C, YMean, ZMean) {
+.GroupLassoOO <- function(beta, groups, compgroups, Y, Z, lambda, INIactive, eps, p, MN, C, YMean, ZMean, restrictions) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -212,7 +212,7 @@
 
   BB <- GamLoopGLOO(
     beta, INIactive, lambda, Y, ZZ, groups, fullgroups, compgroups, eps, YMean, ZMean, k, p * k, M2, eigvals,
-    eigvecs, k
+    eigvecs, k, restrictions
   )
 
   if (MN) {
@@ -224,7 +224,7 @@
 
 # Sparse Lag VARX-L
 .SparseGroupLassoVARX <- function(beta, groups, compgroups, Y, Z, lambda, alpha, INIactive, eps, starting_eigvals, p, MN,
-                                  k, s, k1, C, YMean, ZMean) {
+                                  k, s, k1, C, YMean, ZMean, restrictions) {
   m <- k - k1
   Y <- t(Y)
   M2f <- list()
@@ -250,7 +250,7 @@
 
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, (k1) * p + (s * m), length(lambda)))
   BB <- GamLoopSGLX(beta, INIactive, lambda, alpha, Y, Z, groups, groups_full, compgroups, eps, YMean, ZMean, k1, (k1) *
-    p + (s * m), M2f, eigs, k1)
+    p + (s * m), M2f, eigs, k1, restrictions)
 
   BB$q1 <- q1
 
@@ -264,7 +264,7 @@
 
 
 .SparseGroupLassoVARXDual <- function(beta, groups, compgroups, Y, Z, lambda, alpha, INIactive, eps, starting_eigvals, p,
-                                      MN, k, s, k1, C, YMean, ZMean) {
+                                      MN, k, s, k1, C, YMean, ZMean, restrictions) {
   m <- k - k1
   Y <- t(Y)
   M2f <- list()
@@ -289,7 +289,7 @@
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, (k1) * p + (s * m), nrow(lambda) * length(alpha)))
 
   BB <- GamLoopSGLXDP(beta, INIactive, lambda, alpha, Y, Z, groups, groups, compgroups, eps, YMean, ZMean, k1, (k1) * p +
-    (s * m), M2f, eigs, k1)
+    (s * m), M2f, eigs, k1, restrictions)
 
   BB$q1 <- q1
 
@@ -303,7 +303,7 @@
 
 # Sparse Own/Other (VARX)
 .SparseGroupLassoVAROOX <- function(beta, groups, compgroups, Y, Z, lambda, alpha, INIactive, eps, p, MN, k1, s, k, dual = FALSE,
-                                    C, YMean, ZMean) {
+                                    C, YMean, ZMean, restrictions) {
   m <- k - k1
 
   Y <- t(Y)
@@ -335,11 +335,11 @@
   beta <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k1, k1 * p + m * s, gran2))
   if (dual) {
     BB <- GamLoopSGLOODP(beta, INIactive, lambda, alpha, Y, ZZ, groups, groups, compgroups, eps, YMean, ZMean, k1, p *
-      k1 + m * s, M2f, eigs, m)
+      k1 + m * s, M2f, eigs, m, restrictions)
   } else {
     BB <- GamLoopSGLOO(
       beta, INIactive, lambda, alpha, Y, ZZ, groups, fullgroups, compgroups, eps, YMean, ZMean, k1,
-      p * k1 + m * s, M2f, eigs, m
+      p * k1 + m * s, M2f, eigs, m, restrictions
     )
   }
   if (MN) {
@@ -351,12 +351,12 @@
 
 
 # Elementwise HLAG
-.HLAGElemAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, separate_lambdas = FALSE) {
+.HLAGElemAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   k <- ncol(Y)
 
   lambda <- as.matrix(lambda)
   betaini <- array(beta[, 2:dim(beta)[2], ], dim = c(k, k * p, nrow(lambda)))
-  betafin <- gamloopElem(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, separate_lambdas)
+  betafin <- gamloopElem(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, restrictions, separate_lambdas)
 
   if (MN) {
     betafin <- adjust_mn_var(betafin, C)
@@ -365,7 +365,7 @@
   return(betafin)
 }
 
-.lassoVARFistX <- function(B, Z, Y, lambda, eps, p, MN, k, k1, s, C, YMean, ZMean, separate_lambdas = FALSE) {
+.lassoVARFistX <- function(B, Z, Y, lambda, eps, p, MN, k, k1, s, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -375,7 +375,7 @@
   nc <- apply(B, 3, ncol)[1]
 
   BINI <- B[, 2:nc, , drop = F]
-  beta <- gamloopFista(BINI, Y, Z, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), B1, k, p, tk, k1, s, separate_lambdas)
+  beta <- gamloopFista(BINI, Y, Z, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), B1, k, p, tk, k1, s, restrictions, separate_lambdas)
 
   if (MN) {
     beta <- adjust_mn_var(beta, C)
@@ -384,7 +384,7 @@
 }
 
 # general basic/elastic net
-.lassoVARFistXEN <- function(B, Z, Y, lambda, alpha, eps, p, MN, k, k1, s, C, YMean, ZMean, separate_lambdas = FALSE) {
+.lassoVARFistXEN <- function(B, Z, Y, lambda, alpha, eps, p, MN, k, k1, s, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -398,7 +398,7 @@
   ## if (length(alpha) == 1) { alpha <- rep(alpha, dim(B)[3]) }
   beta <- gamloopFistaEN(
     BFOO, Y, Z, as.matrix(lambda), as.matrix(alpha), eps, as.matrix(YMean), as.matrix(ZMean), BFOO1,
-    k, p, tk, k1, s, separate_lambdas
+    k, p, tk, k1, s, restrictions, separate_lambdas
   )
 
   if (MN) {
@@ -410,7 +410,7 @@
 
 
 # Componentwise HLAG
-.HLAGCAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, separate_lambdas = FALSE) {
+.HLAGCAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -422,7 +422,7 @@
   } else {
     betaini <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k, k * p, length(lambda)))
   }
-  betafin <- gamloopHLAG(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, separate_lambdas)
+  betafin <- gamloopHLAG(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, restrictions, separate_lambdas)
 
   if (MN) {
     betafin <- adjust_mn_var(betafin, C)
@@ -462,7 +462,7 @@
 }
 
 # HLAG Own/Other
-.HLAGOOAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, separate_lambdas = FALSE) {
+.HLAGOOAlg <- function(beta, Y, Z, lambda, eps, p, MN, C, YMean, ZMean, restrictions, separate_lambdas = FALSE) {
   k <- ncol(Y)
 
   weights <- sqrt(c(rep(c(1, k - 1), length = 2 * p)))
@@ -474,7 +474,7 @@
   lambda <- as.matrix(lambda)
   betaini <- array(beta[, 2:ncol(as.matrix(beta[, , 1])), ], dim = c(k, k * p, nrow(lambda)))
 
-  betafin <- gamloopOO(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, weights, groups, separate_lambdas)
+  betafin <- gamloopOO(betaini, Y, Z, lambda, eps, YMean, ZMean, as.matrix(betaini[, , 1]), k, p, weights, groups, restrictions, separate_lambdas)
 
   if (MN) {
     betafin <- adjust_mn_var(betafin, C)
@@ -536,7 +536,7 @@ fistaX <- function(Y, Z, beta, p, k1, lambda, eps, tk, m, s) {
 
 # Lag weighted lasso: VAR only
 
-.lassoVARTL <- function(B, Z, Y, lambda, eps, p, MN, alpha, C, YMean, ZMean) {
+.lassoVARTL <- function(B, Z, Y, lambda, eps, p, MN, alpha, C, YMean, ZMean, restrictions) {
   if (!is.matrix(Y)) {
     Y <- matrix(Y, ncol = 1)
   }
@@ -559,7 +559,7 @@ fistaX <- function(Y, Z, beta, p, k1, lambda, eps, tk, m, s) {
       array(BFOO[, , (1 + (i - 1) * gran2):(i * length(lambda))],
         dim = c(k, k * p, length(lambda))
       ), Y, ZADJ, as.matrix(lambda), eps, as.matrix(YMean), as.matrix(ZMean), BFOO1,
-      k, p, tk, k, p
+      k, p, tk, k, p, restrictions
     )
 
 
