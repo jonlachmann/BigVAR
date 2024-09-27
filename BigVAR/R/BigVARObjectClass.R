@@ -190,7 +190,7 @@ setClass(Class = "BigVAR", representation(Data = "matrix", model_data = "list", 
                                           crossval = "character", ic = "logical", VARX = "list", T1 = "numeric", T2 = "numeric", ONESE = "logical", ownlambdas = "logical",
                                           tf = "logical", alpha = "numeric", recursive = "logical", dates = "character", constvec = "numeric", tol = "numeric",
                                           window.size = "numeric", separate_lambdas = "logical", loss = "character", delta = "numeric", gamma = "numeric", rolling_oos = "logical",
-                                          VARXI = "logical", linear = "logical", refit_fraction = "numeric"), validity = check.BigVAR)
+                                          VARXI = "logical", linear = "logical", refit_fraction = "numeric", restrictions = "matrix"), validity = check.BigVAR)
 
 
 #' Construct an object of class BigVAR
@@ -275,7 +275,7 @@ setClass(Class = "BigVAR", representation(Data = "matrix", model_data = "list", 
 #' @export
 constructModel <- function(Y, p, struct, gran, h = 1, cv = "Rolling", verbose = TRUE, IC = TRUE, VARX = list(), T1 = floor(nrow(Y)/3),
                            T2 = floor(2 * nrow(Y)/3), ONESE = FALSE, ownlambdas = FALSE, recursive = FALSE, dates = as.character(NULL), window.size = 0,
-                           separate_lambdas = FALSE, linear = FALSE, loss = "L2", rolling_oos = FALSE, model.controls = list()) {
+                           separate_lambdas = FALSE, linear = FALSE, loss = "L2", rolling_oos = FALSE, model.controls = list(), restrictions = NULL) {
 
 
     if (exists("RVAR", where = model.controls)) {
@@ -486,11 +486,14 @@ constructModel <- function(Y, p, struct, gran, h = 1, cv = "Rolling", verbose = 
     if (ncol(model_data$trainY) == 1 & separate_lambdas) {
         separate_lambdas <- FALSE
     }
+    if (is.null(restrictions)) {
+        restrictions <- matrix(1, ncol(var_data$trainY), nrow(var_data$trainZ))
+    }
                                (BV1 <- new("BigVAR", Data = Y, model_data = var_data, lagmax = p, Structure = struct, Relaxed = RVAR, Granularity = gran,
                                            Minnesota = MN, verbose = verbose, horizon = h, crossval = cv, ic = IC, VARX = VARX, VARXI = VARXI, T1 = T1, T2 = T2,
                                            ONESE = ONESE, ownlambdas = ownlambdas, tf = tf, alpha = alpha, recursive = recursive, dates = ind, constvec = C,
                                            intercept = intercept, tol = tol, window.size = window.size, separate_lambdas = separate_lambdas, loss = loss, delta = delta,
-                                           gamma = gamma, rolling_oos = rolling_oos, linear = linear, refit_fraction = refit_fraction))
+                                           gamma = gamma, rolling_oos = rolling_oos, linear = linear, refit_fraction = refit_fraction, restrictions = restrictions))
     return(BV1)
 }
 
@@ -624,6 +627,7 @@ setMethod(f = "cv.BigVAR", signature = "BigVAR", definition = function(object) {
     tol <- object@tol
     window.size <- object@window.size
     verbose <- object@verbose
+    restrictions <- object@restrictions
     loss <- object@loss
     delta <- object@delta
     linear <- object@linear
@@ -705,7 +709,7 @@ setMethod(f = "cv.BigVAR", signature = "BigVAR", definition = function(object) {
         lambda <- create_lambda_grid(trainY[1:T2, , drop = FALSE], trainZ[, 1:T2, drop = FALSE], lapply(groups, function(x) {
             x + 1
         }), gran1, gran2, group, p, k1, s + s1, m, k, MN, alpha, C, intercept, tol, VARXI, separate_lambdas, dual, gamma,
-        linear, verbose)
+        linear, restrictions, verbose)
     }
     h <- object@horizon
     ZFull <- list()
@@ -797,7 +801,7 @@ setMethod(f = "cv.BigVAR", signature = "BigVAR", definition = function(object) {
             }
         }
         temp <- .BigVAR.fit(group, betaWS, trainZ, trainY, lambda, tol, p, m, k1, k, s, s1, MN, C, intercept, separate_lambdas,
-                            dual, activeset, starting_eigvals, groups, compgroups, VARXI, alpha, palpha, gamma)
+                            dual, activeset, starting_eigvals, groups, compgroups, VARXI, alpha, palpha, gamma, restrictions)
         beta <- temp$beta
         betaWS <- temp$beta
         if (MN) {
@@ -832,7 +836,7 @@ setMethod(f = "cv.BigVAR", signature = "BigVAR", definition = function(object) {
     alphaopt <- optimal_indices$alphaopt
     int_results <- new("BigVAR.intermediate", ZFull = ZFull, InSampMSFE = MSFE, InSampSD = apply(MSFE, 2, sd), index = optind,
                        OptimalLambda = lambdaopt, dual = dual, contemp = contemp, LambdaGrid = as.matrix(lambda), object, T1 = T2, T2 = T3,
-                       alpha = alphaopt)
+                       alpha = alphaopt, restrictions = restrictions)
     OOSEval <- BigVAR.Eval(int_results)
     MSFEOOSAgg <- na.omit(OOSEval$MSFE)
     betaPred <- OOSEval$betaPred
@@ -1027,6 +1031,7 @@ setMethod(f = "BigVAR.Eval", signature = "BigVAR.intermediate", definition = fun
     alpha <- object@alpha
     ZFull <- object@ZFull
     RVAR <- object@Relaxed
+    restrictions <- object@restrictions
     refit_fraction <- object@refit_fraction
     intercept <- object@intercept
     Y <- ZFull$Y
@@ -1147,7 +1152,7 @@ setMethod(f = "BigVAR.Eval", signature = "BigVAR.intermediate", definition = fun
         }
         dual <- FALSE
         temp <- .BigVAR.fit(group, betaWS, trainZ, trainY, lambda, tol, p, m, k1, k, s, s1, MN, C, intercept, separate_lambdas,
-                            dual, activeset, starting_eigvals, groups, compgroups, VARXI, alpha, palpha, gamma)
+                            dual, activeset, starting_eigvals, groups, compgroups, VARXI, alpha, palpha, gamma, restrictions)
         eZ <- c(1, ZFull$Z[, v])
         beta <- temp$beta
         betaWS <- temp$beta
@@ -1199,7 +1204,7 @@ setMethod(f = "BigVAR.Eval", signature = "BigVAR.intermediate", definition = fun
         }
     }
     temp <- .BigVAR.fit(group, beta, ZFull$Z, ZFull$Y, lambda, tol, p, m, k1, k, s, s1, MN, C, intercept, separate_lambdas,
-                        dual, activeset, starting_eigvals, groups, compgroups, VARXI, alpha, palpha)
+                        dual, activeset, starting_eigvals, groups, compgroups, VARXI, alpha, palpha, restrictions = restrictions)
     betas_full <- temp$beta
     if (separate_lambdas) {
         betaPred <- matrix(0, nrow = ncol(Y), ncol = dim(betas_full)[2])
@@ -1245,6 +1250,7 @@ setMethod(f = "BigVAR.est", signature = "BigVAR", definition = function(object) 
     intercept <- object@intercept
     VARX <- object@VARX
     tol <- object@tol
+    restrictions <- object@restrictions
     loss <- object@loss
     linear <- object@linear
     delta <- object@delta
@@ -1309,7 +1315,7 @@ setMethod(f = "BigVAR.est", signature = "BigVAR", definition = function(object) 
         lambda <- create_lambda_grid(trainY, trainZ, lapply(groups, function(x) {
             x + 1
         }), gran1, gran2, group, p, k1, s + s1, m, k, MN, alpha, C, intercept, tol, VARXI, separate_lambdas, dual, gamma,
-        linear, verbose = FALSE)
+        linear, restrictions, verbose = FALSE)
     }
     h <- object@horizon
     ZFull <- list()
@@ -1333,7 +1339,7 @@ setMethod(f = "BigVAR.est", signature = "BigVAR", definition = function(object) 
     ## temp <- .BigVAR.fit(group, beta, trainZ, trainY, lambda, tol, p, m, k1, k, s, s1, MN, C, intercept,
     ## separate_lambdas, dual, activeset, q1a, jj, jjcomp, VARX, alpha, kk, palpha)
     temp <- .BigVAR.fit(group, beta, trainZ, trainY, lambda, tol, p, m, k1, k, s, s1, MN, C, intercept, separate_lambdas,
-                        dual, activeset, starting_eigvals, groups, compgroups, VARXI, alpha, palpha, gamma)
+                        dual, activeset, starting_eigvals, groups, compgroups, VARXI, alpha, palpha, gamma, object@restrictions)
     beta <- temp$beta
     if (RVAR) {
         beta_rls <- RelaxedLS(cbind(t(trainZ), trainY), beta)
