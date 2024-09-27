@@ -1253,7 +1253,7 @@ List blockUpdateSGLX(mat& beta, const mat& Z1, double lam, double alpha, const m
                     mat restrict = restrictions.cols(s45);
                     double t = 1 / Eigs(i);
                     mat astar2 = sparseWLX(M1, r, k1, betaS, t, alpha, lam, eps, restrict);
-                    beta.cols(s45) = astar2;
+                    beta.cols(s45) = astar2 % restrict;
                     active(i) = s45;
                 }
             }
