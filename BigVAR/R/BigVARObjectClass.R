@@ -709,7 +709,7 @@ setMethod(f = "cv.BigVAR", signature = "BigVAR", definition = function(object) {
         lambda <- create_lambda_grid(trainY[1:T2, , drop = FALSE], trainZ[, 1:T2, drop = FALSE], lapply(groups, function(x) {
             x + 1
         }), gran1, gran2, group, p, k1, s + s1, m, k, MN, alpha, C, intercept, tol, VARXI, separate_lambdas, dual, gamma,
-        linear, restrictions, verbose)
+        linear, verbose)
     }
     h <- object@horizon
     ZFull <- list()
@@ -1315,7 +1315,7 @@ setMethod(f = "BigVAR.est", signature = "BigVAR", definition = function(object) 
         lambda <- create_lambda_grid(trainY, trainZ, lapply(groups, function(x) {
             x + 1
         }), gran1, gran2, group, p, k1, s + s1, m, k, MN, alpha, C, intercept, tol, VARXI, separate_lambdas, dual, gamma,
-        linear, restrictions, verbose = FALSE)
+        linear, verbose = FALSE)
     }
     h <- object@horizon
     ZFull <- list()
