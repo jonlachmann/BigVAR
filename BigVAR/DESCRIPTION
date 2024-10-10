@@ -32,9 +32,11 @@ Encoding: UTF-8
 Suggests: 
     knitr,
     rmarkdown,
-	gridExtra,
-	expm,
-	MCS,
-	quantmod,
-	codetools
+    gridExtra,
+    expm,
+    MCS,
+    quantmod,
+    codetools,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
+Config/testthat/edition: 3
